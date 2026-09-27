@@ -1,3 +1,4 @@
+import { nightBackdrop, frame } from "../theme/ornaments";
 import { t } from "../i18n";
 import Phaser from "phaser";
 import { label, button, timeLabel } from "../ui/common";
@@ -12,14 +13,16 @@ export class GameOverScene extends Phaser.Scene {
     super("GameOver");
   }
   create(result: RunResult) {
-    this.add.tileSprite(640, 400, 1280, 800, "grid").setAlpha(0.5);
+    nightBackdrop(this);
+    this.add.rectangle(640, 390, 940, 590, 0x10151a, 0.88);
+    frame(this.add.graphics(), 170, 95, 940, 590);
     label(
       this,
       640,
       165,
       () => t(result.won ? "gameOver.won" : "gameOver.lost"),
       14,
-      result.won ? "#65ffe3" : "#ff647c",
+      result.won ? "#b8a16a" : "#b86451",
     ).setOrigin(0.5);
     label(
       this,
@@ -36,8 +39,8 @@ export class GameOverScene extends Phaser.Scene {
     (["gameOver.time", "gameOver.level", "gameOver.kills"] as const).forEach(
       (key, i) => {
         const x = 390 + i * 250;
-        label(this, x, 350, values[i], 44, "#65ffe3").setOrigin(0.5);
-        label(this, x, 406, () => t(key), 12, "#8197aa").setOrigin(0.5);
+        label(this, x, 350, values[i], 44, "#b8a16a").setOrigin(0.5);
+        label(this, x, 406, () => t(key), 12, "#a69e8c").setOrigin(0.5);
       },
     );
     button(

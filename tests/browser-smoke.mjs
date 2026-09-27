@@ -42,12 +42,12 @@ try {
           s.children.list.filter((o) => o.type === "Text").map((o) => o.text),
         ),
     );
-  assert.ok((await texts()).includes("게임 시작   →"));
+  assert.ok((await texts()).includes("시작"));
   await page.evaluate(async () => {
     const { setLocale } = await import("/src/i18n/index.ts");
     setLocale("en");
   });
-  assert.ok((await texts()).includes("PLAY   →"));
+  assert.ok((await texts()).includes("BEGIN"));
   await page.evaluate(async () => {
     const { setLocale } = await import("/src/i18n/index.ts");
     setLocale("ko");
@@ -95,7 +95,7 @@ try {
     ),
     time,
   );
-  assert.ok((await texts()).includes("생존 능력을 강화하세요"));
+  assert.ok((await texts()).includes("술법을 깨우치세요"));
   await page.screenshot({ path: "upgrade-preview.png" });
   // Verify all ten cards in both locales, including maximum rarity values.
   for (const locale of ["ko", "en"]) {
@@ -187,7 +187,7 @@ try {
   await page.waitForFunction(() =>
     window.__SURVIVOR_GAME__.scene.isActive("GameOver"),
   );
-  assert.ok((await texts()).includes("게임 오버"));
+  assert.ok((await texts()).includes("기력이 다했습니다"));
   await page.screenshot({ path: "gameover-preview.png" });
   await page.keyboard.press("Enter");
   await page.waitForFunction(() =>

@@ -5,7 +5,7 @@ export const ENEMIES = {
     speed: 75,
     damage: 10,
     xp: 2,
-    color: 0xf76c8b,
+    color: 0x9daba4,
     radius: 15,
   },
   runner: {
@@ -14,7 +14,7 @@ export const ENEMIES = {
     speed: 142,
     damage: 8,
     xp: 3,
-    color: 0xffbe70,
+    color: 0xb07359,
     radius: 12,
   },
   tank: {
@@ -23,7 +23,7 @@ export const ENEMIES = {
     speed: 49,
     damage: 20,
     xp: 10,
-    color: 0xb39bff,
+    color: 0x9d8980,
     radius: 25,
   },
 };

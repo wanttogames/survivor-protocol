@@ -6,7 +6,7 @@ export function label(
   y: number,
   text: string | (() => string),
   size = 16,
-  color = "#e8f6ff",
+  color = "#e1ddd0",
 ) {
   const object = scene.add
     .text(x, y, typeof text === "function" ? text() : text, {
@@ -31,15 +31,16 @@ export function button(
   width = 260,
 ) {
   const box = scene.add
-    .rectangle(x, y, width, 58, 0x65ffe3)
+    .rectangle(x, y, width, 58, 0x762f29)
+    .setStrokeStyle(1, 0xb8a16a, 0.65)
     .setDepth(100)
     .setScrollFactor(0)
     .setInteractive({ useHandCursor: true });
-  const text = label(scene, x, y, title, 17, "#08151b")
+  const text = label(scene, x, y, title, 17, "#e1ddd0")
     .setOrigin(0.5)
     .setFontStyle("bold");
-  box.on("pointerover", () => box.setFillStyle(0xb1fff0));
-  box.on("pointerout", () => box.setFillStyle(0x65ffe3));
+  box.on("pointerover", () => box.setFillStyle(0x963f35));
+  box.on("pointerout", () => box.setFillStyle(0x762f29));
   box.on("pointerdown", action);
   return [box, text];
 }

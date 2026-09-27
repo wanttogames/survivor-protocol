@@ -34,13 +34,13 @@ test("Korean default and dictionary/placeholder parity", () => {
 });
 test("locale switch, interpolation, subscriptions and cleanup", () => {
   setLocale("ko");
-  assert.equal(t("menu.play"), "게임 시작   →");
+  assert.equal(t("menu.play"), "시작");
   assert.equal(t("hud.level", { level: 3 }), "레벨 3");
   let count = 0;
   const off = onLocaleChange(() => count++);
   setLocale("en");
   assert.equal(getLocale(), "en");
-  assert.equal(t("menu.play"), "PLAY   →");
+  assert.equal(t("menu.play"), "BEGIN");
   assert.equal(count, 1);
   off();
   setLocale("ko");

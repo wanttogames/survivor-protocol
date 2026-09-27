@@ -1,4 +1,4 @@
-# SURVIVOR PROTOCOL
+# 귀야 · GUIYA
 
 Phaser 3 + TypeScript + Vite 기반 오프라인 싱글 플레이 생존 액션 MVP.
 외부 CDN, 이미지 요청, 백엔드, 계정, DB가 없습니다. 모든 그래픽을 시작 시 생성합니다.
@@ -129,3 +129,39 @@ Canvas와 CSS 모두 Pretendard → Noto Sans KR → Malgun Gothic → Apple SD 
 `menu-preview.png`, `upgrade-preview.png`, `game-preview.png`, `gameover-preview.png`, `mobile-preview.png`에서 검증 화면을 확인할 수 있습니다.
 
 적용: 기존 저장소의 동일 경로에 소스 파일을 반영한 후 `npm run build`로 확인하고 커밋/푸시하세요. 이 ZIP에는 .git과 node_modules가 포함되지 않습니다. 이번 작업에서 GitHub 푸시 또는 Cloudflare 재배포는 수행하지 않았습니다.
+
+
+## 1차 조선 오컬트 리스킨
+
+봉인이 무너진 조선의 밤, 퇴마사가 파사부로 귀물을 막으며 새벽까지 살아남는 테마입니다.
+이번 버전은 세계관·명칭·UI·색감 변경에 한정됩니다.
+
+- 메뉴: 귀야 한글 타이틀, 희미한 달, 안개, 나뭇가지 실루엣, 추상 부적 문양
+- HUD: 먹빛 반투명 패널, 목재색 테두리, 탁한 금색 체력과 청록색 혼백 게이지
+- 성장 카드: 한지색 배경, 종이 섬유선, 붉은 인장, 모서리 문양, 선택 시 금빛 강조
+- 결과 화면: 기력이 다했습니다 / 새벽이 밝았습니다, 생존 기록과 재시작
+- 이름: 파사부, 떠도는 원혼, 야귀, 육귀, 혼백, 깨달음
+- 술법: 파사 강화, 속필, 축지, 금강호신, 기력 회복, 분신부, 비부, 혼백 인도, 청명안, 관통부
+- 희귀도: 일반 / 희귀 / 영웅 (기존 내부 ID 유지)
+- `src/theme/palette.ts`: 테마 팔레트
+- `src/theme/ornaments.ts`: 메뉴 배경, 테두리, 창작 추상 부적 문양
+- `src/i18n/ko.ts`, `en.ts`: 한영 테마 문구. 기본 언어는 계속 한국어
+
+이동·공격·AI·스폰·경험치·레벨업·효과량·충돌·HP·종료 판정은 변경하지 않았습니다.
+`systems/*`, `config/balance.ts`, 업그레이드 효과 데이터는 이전 버전과 동일합니다.
+GameScene 변경은 장식 및 색상, Projectile 변경은 색조에 한정됩니다.
+텍스처 키와 물리 크기를 유지해 2차에서 그림만 교체할 수 있습니다.
+
+검증: npm run build 성공, TypeScript 오류 없음, 테스트 8개 통과.
+Chromium에서 메뉴·HUD·카드·결과의 한글 및 카드 10종 한영 텍스트 범위, 핵심 플레이 흐름을 확인했습니다.
+Vite의 큰 Phaser 번들 권고 경고는 남아 있습니다.
+
+2차 교체 대상(이번에 제작하지 않음):
+1. player 텍스처 → 조선 퇴마사 스프라이트
+2. grunt / runner / tank → 원혼 / 야귀 / 육귀 스프라이트
+3. bolt / orb / spark → 파사부 / 혼백 조각 / 퇴마 효과
+4. grid와 임시 바닥 문양 → 조선 마을·숲 타일셋
+5. 추상 메뉴 배경과 카드 문양 → 정식 배경 아트·술법별 아이콘
+
+기존 프로젝트 디렉터리와 배포 설정 이름 survivor-protocol은 유지했습니다.
+소스와 dist를 포함한 압축 파일이며 GitHub 푸시 및 Cloudflare 재배포는 별도로 진행해야 합니다.

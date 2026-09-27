@@ -1,3 +1,4 @@
+import { talisman } from "../theme/ornaments";
 import { t, FONT_FAMILY } from "../i18n";
 import Phaser from "phaser";
 import { BALANCE } from "../config/balance";
@@ -50,12 +51,10 @@ export class GameScene extends Phaser.Scene {
       BALANCE.worldSize,
       "grid",
     );
-    const marks = this.add.graphics().lineStyle(3, 0x65ffe3, 0.12);
+    const marks = this.add.graphics().lineStyle(3, 0xb8a16a, 0.12);
     for (let y = 400; y < 3600; y += 800)
       for (let x = 400; x < 3600; x += 800) {
-        marks.strokeCircle(x, y, 90);
-        marks.lineBetween(x - 110, y, x + 110, y);
-        marks.lineBetween(x, y - 110, x, y + 110);
+        talisman(marks, x - 20, y - 40, 40, 80, 0x594738);
       }
     this.player = new Player(this);
     this.cameras.main
@@ -88,7 +87,7 @@ export class GameScene extends Phaser.Scene {
         scale: { start: 1, end: 0 },
         alpha: { start: 0.8, end: 0 },
         maxParticles: BALANCE.limits.particles,
-        tint: [0x65ffe3, 0xf76c8b],
+        tint: [0xb8a16a, 0x9daba4],
       })
       .setDepth(6);
     this.physics.add.overlap(boltGroup, enemyGroup, (a, b) => {
@@ -115,11 +114,11 @@ export class GameScene extends Phaser.Scene {
       365,
       () => t("pause.message"),
       26,
-      "#65ffe3",
+      "#b8a16a",
     )
       .setOrigin(0.5)
       .setAlign("center")
-      .setBackgroundColor("#08111e")
+      .setBackgroundColor("#111719")
       .setPadding(50)
       .setDepth(210)
       .setVisible(false);
@@ -252,7 +251,7 @@ export class GameScene extends Phaser.Scene {
     d.text
       .setPosition(x, y - 15)
       .setText(critical ? `${value}!` : String(value))
-      .setColor(critical ? "#ffe58c" : "#b3cfda")
+      .setColor(critical ? "#d7bd7d" : "#cbc8b9")
       .setFontSize(critical ? 20 : 14)
       .setAlpha(1)
       .setVisible(true);
@@ -261,7 +260,7 @@ export class GameScene extends Phaser.Scene {
     if (!this.levels.consume()) return;
     this.physics.pause();
     this.particles.pause();
-    this.cameras.main.flash(100, 101, 255, 227, false);
+    this.cameras.main.flash(100, 184, 161, 106, false);
     this.panel.show(this.upgrades.roll(), (choice) => {
       this.upgrades.apply(choice, this.player.stats);
       this.hud.update(this.player, this.levels, this.elapsed, this.kills);

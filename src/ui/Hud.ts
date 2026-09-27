@@ -1,3 +1,4 @@
+import { frame } from "../theme/ornaments";
 import { t } from "../i18n";
 import { ARC_BOLT } from "../data/weapons";
 import Phaser from "phaser";
@@ -14,22 +15,29 @@ export class Hud {
   private build;
   constructor(scene: Phaser.Scene) {
     scene.add
-      .rectangle(640, 43, 1232, 70, 0x08111e, 0.94)
-      .setStrokeStyle(1, 0x243443)
+      .rectangle(640, 43, 1232, 70, 0x111719, 0.94)
+      .setStrokeStyle(1, 0x645540)
       .setScrollFactor(0)
       .setDepth(90);
+    frame(
+      scene.add.graphics().setDepth(91).setScrollFactor(0),
+      24,
+      8,
+      1232,
+      70,
+    );
     this.bars = scene.add.graphics().setScrollFactor(0).setDepth(101);
-    label(scene, 44, 20, () => t("hud.hp"), 10, "#8197aa");
+    label(scene, 44, 20, () => t("hud.hp"), 10, "#a69e8c");
     this.hp = label(scene, 255, 19, "", 12).setOrigin(1, 0);
     this.lv = label(scene, 294, 26, "", 21).setFontStyle("bold");
-    label(scene, 640, 13, () => t("hud.time"), 10, "#8197aa").setOrigin(0.5, 0);
-    label(scene, 294, 59, () => t("hud.exp"), 10, "#8197aa");
+    label(scene, 640, 13, () => t("hud.time"), 10, "#a69e8c").setOrigin(0.5, 0);
+    label(scene, 294, 59, () => t("hud.exp"), 10, "#a69e8c");
     this.timer = label(scene, 640, 29, "", 26).setOrigin(0.5, 0);
-    label(scene, 780, 23, () => t("hud.kills"), 10, "#8197aa");
+    label(scene, 780, 23, () => t("hud.kills"), 10, "#a69e8c");
     this.kills = label(scene, 890, 40, "", 19).setOrigin(1, 0);
-    this.wave = label(scene, 1215, 28, "", 14, "#65ffe3").setOrigin(1, 0);
-    this.build = label(scene, 36, 753, "", 12, "#8197aa");
-    label(scene, 1245, 755, () => t("hud.controls"), 11, "#8197aa").setOrigin(
+    this.wave = label(scene, 1215, 28, "", 14, "#b8a16a").setOrigin(1, 0);
+    this.build = label(scene, 36, 753, "", 12, "#a69e8c");
+    label(scene, 1245, 755, () => t("hud.controls"), 11, "#a69e8c").setOrigin(
       1,
       0,
     );
@@ -52,9 +60,9 @@ export class Hud {
     );
     this.bars
       .clear()
-      .fillStyle(0x20323e)
+      .fillStyle(0x393127)
       .fillRoundedRect(44, 43, 210, 8, 4)
-      .fillStyle(p.stats.hp / p.stats.maxHp < 0.3 ? 0xff647c : 0x65ffe3)
+      .fillStyle(p.stats.hp / p.stats.maxHp < 0.3 ? 0xb45a45 : 0xb8a16a)
       .fillRoundedRect(
         44,
         43,
@@ -62,9 +70,9 @@ export class Hud {
         8,
         4,
       )
-      .fillStyle(0x1c2c3b)
+      .fillStyle(0x283438)
       .fillRect(24, 80, 1232, 3)
-      .fillStyle(0x65ffe3)
+      .fillStyle(0x82b5b5)
       .fillRect(24, 80, (1232 * l.xp) / l.required, 3);
     this.build.setText(
       t("hud.build", {
