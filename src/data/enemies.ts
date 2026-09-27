@@ -1,6 +1,6 @@
 export const ENEMIES = {
   grunt: {
-    name: "Drifter",
+    nameKey: "enemy.grunt.name" as const,
     hp: 32,
     speed: 75,
     damage: 10,
@@ -9,7 +9,7 @@ export const ENEMIES = {
     radius: 15,
   },
   runner: {
-    name: "Skitter",
+    nameKey: "enemy.runner.name" as const,
     hp: 23,
     speed: 142,
     damage: 8,
@@ -18,7 +18,7 @@ export const ENEMIES = {
     radius: 12,
   },
   tank: {
-    name: "Bulwark",
+    nameKey: "enemy.tank.name" as const,
     hp: 170,
     speed: 49,
     damage: 20,

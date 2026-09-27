@@ -1,19 +1,23 @@
+import type { TranslationKey, TranslationParams } from "../i18n";
 import { BALANCE, type PlayerStats } from "../config/balance";
 export type Rarity = "Common" | "Rare" | "Epic";
 export interface UpgradeDefinition {
   id: string;
-  name: string;
-  description: string;
+  nameKey: TranslationKey;
+  descriptionKey: TranslationKey;
+  descriptionParams: (multiplier: number) => TranslationParams;
   icon: string;
   maxLevel: number;
   apply: (stats: PlayerStats, multiplier: number) => void;
 }
 const e = BALANCE.effects;
+const rounded = (value: number) => Math.round(value * 10) / 10;
 export const UPGRADES: UpgradeDefinition[] = [
   {
     id: "power",
-    name: "Overcharge",
-    description: `Attack damage +${e.damage * 100}%`,
+    nameKey: "cards.power.name",
+    descriptionKey: "cards.power.description",
+    descriptionParams: (m) => ({ value: rounded(e.damage * 100 * m) }),
     icon: "ϟ",
     maxLevel: 8,
     apply: (s, m) => {
@@ -22,8 +26,9 @@ export const UPGRADES: UpgradeDefinition[] = [
   },
   {
     id: "rapid",
-    name: "Pulse Relay",
-    description: `Attack speed +${e.attackSpeed * 100}%`,
+    nameKey: "cards.rapid.name",
+    descriptionKey: "cards.rapid.description",
+    descriptionParams: (m) => ({ value: rounded(e.attackSpeed * 100 * m) }),
     icon: "»",
     maxLevel: 8,
     apply: (s, m) => {
@@ -32,8 +37,9 @@ export const UPGRADES: UpgradeDefinition[] = [
   },
   {
     id: "boots",
-    name: "Vector Drive",
-    description: `Movement speed +${e.moveSpeed * 100}%`,
+    nameKey: "cards.boots.name",
+    descriptionKey: "cards.boots.description",
+    descriptionParams: (m) => ({ value: rounded(e.moveSpeed * 100 * m) }),
     icon: "↗",
     maxLevel: 5,
     apply: (s, m) => {
@@ -42,8 +48,9 @@ export const UPGRADES: UpgradeDefinition[] = [
   },
   {
     id: "vitality",
-    name: "Core Plating",
-    description: `Max HP +${e.maxHp} · restore added HP`,
+    nameKey: "cards.vitality.name",
+    descriptionKey: "cards.vitality.description",
+    descriptionParams: (m) => ({ value: Math.round(e.maxHp * m) }),
     icon: "⬡",
     maxLevel: 6,
     apply: (s, m) => {
@@ -54,8 +61,9 @@ export const UPGRADES: UpgradeDefinition[] = [
   },
   {
     id: "recovery",
-    name: "Field Repair",
-    description: `Restore ${e.heal} HP`,
+    nameKey: "cards.recovery.name",
+    descriptionKey: "cards.recovery.description",
+    descriptionParams: (m) => ({ value: Math.round(e.heal * m) }),
     icon: "+",
     maxLevel: Infinity,
     apply: (s, m) => {
@@ -64,8 +72,9 @@ export const UPGRADES: UpgradeDefinition[] = [
   },
   {
     id: "multi",
-    name: "Split Emitter",
-    description: `Additional projectile +${e.projectileCount}`,
+    nameKey: "cards.multi.name",
+    descriptionKey: "cards.multi.description",
+    descriptionParams: (m) => ({ value: e.projectileCount }),
     icon: "⋔",
     maxLevel: 4,
     apply: (s) => {
@@ -74,8 +83,9 @@ export const UPGRADES: UpgradeDefinition[] = [
   },
   {
     id: "velocity",
-    name: "Ion Accelerator",
-    description: `Projectile speed +${e.projectileSpeed * 100}%`,
+    nameKey: "cards.velocity.name",
+    descriptionKey: "cards.velocity.description",
+    descriptionParams: (m) => ({ value: rounded(e.projectileSpeed * 100 * m) }),
     icon: "›",
     maxLevel: 5,
     apply: (s, m) => {
@@ -84,8 +94,9 @@ export const UPGRADES: UpgradeDefinition[] = [
   },
   {
     id: "magnet",
-    name: "Gravity Well",
-    description: `Pickup radius +${e.pickupRadius * 100}%`,
+    nameKey: "cards.magnet.name",
+    descriptionKey: "cards.magnet.description",
+    descriptionParams: (m) => ({ value: rounded(e.pickupRadius * 100 * m) }),
     icon: "◎",
     maxLevel: 6,
     apply: (s, m) => {
@@ -94,8 +105,9 @@ export const UPGRADES: UpgradeDefinition[] = [
   },
   {
     id: "critical",
-    name: "Weakpoint Lens",
-    description: `Critical chance +${Math.round(e.criticalChance * 100)}%`,
+    nameKey: "cards.critical.name",
+    descriptionKey: "cards.critical.description",
+    descriptionParams: (m) => ({ value: rounded(e.criticalChance * 100 * m) }),
     icon: "⊕",
     maxLevel: 8,
     apply: (s, m) => {
@@ -104,8 +116,9 @@ export const UPGRADES: UpgradeDefinition[] = [
   },
   {
     id: "pierce",
-    name: "Phase Needle",
-    description: "Pierce one additional target",
+    nameKey: "cards.pierce.name",
+    descriptionKey: "cards.pierce.description",
+    descriptionParams: (m) => ({ value: e.piercing }),
     icon: "↠",
     maxLevel: 5,
     apply: (s) => {

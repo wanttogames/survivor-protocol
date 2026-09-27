@@ -1,26 +1,32 @@
+import { FONT_FAMILY, onLocaleChange } from "../i18n";
 import Phaser from "phaser";
 export function label(
   scene: Phaser.Scene,
   x: number,
   y: number,
-  text: string,
+  text: string | (() => string),
   size = 16,
   color = "#e8f6ff",
 ) {
-  return scene.add
-    .text(x, y, text, {
-      fontFamily: "Arial, sans-serif",
+  const object = scene.add
+    .text(x, y, typeof text === "function" ? text() : text, {
+      fontFamily: FONT_FAMILY,
       fontSize: size,
       color,
     })
     .setScrollFactor(0)
     .setDepth(100);
+  if (typeof text === "function") {
+    const unsubscribe = onLocaleChange(() => object.setText(text()));
+    object.once(Phaser.GameObjects.Events.DESTROY, unsubscribe);
+  }
+  return object;
 }
 export function button(
   scene: Phaser.Scene,
   x: number,
   y: number,
-  title: string,
+  title: string | (() => string),
   action: () => void,
   width = 260,
 ) {

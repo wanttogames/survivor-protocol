@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import Phaser from "phaser";
 import { BALANCE } from "../config/balance";
 import { label } from "./common";
@@ -26,24 +27,17 @@ export class UpgradePanel {
         .setInteractive(),
     );
     add(
-      label(this.scene, 640, 132, "EVOLUTION AVAILABLE", 13, "#65ffe3")
+      label(this.scene, 640, 132, () => t("upgrade.eyebrow"), 13, "#65ffe3")
         .setOrigin(0.5)
         .setDepth(202),
     );
     add(
-      label(this.scene, 640, 174, "Rewrite your protocol.", 36)
+      label(this.scene, 640, 174, () => t("upgrade.title"), 36)
         .setOrigin(0.5)
         .setDepth(202),
     );
     add(
-      label(
-        this.scene,
-        640,
-        222,
-        "SELECT ONE UPGRADE TO CONTINUE",
-        12,
-        "#8197aa",
-      )
+      label(this.scene, 640, 222, () => t("upgrade.guide"), 12, "#8197aa")
         .setOrigin(0.5)
         .setDepth(202),
     );
@@ -71,15 +65,23 @@ export class UpgradePanel {
           this.scene,
           x,
           288,
-          `${c.rarity.toUpperCase()}   /   0${i + 1}`,
+          () =>
+            t("upgrade.rarity", {
+              rarity: t(`rarity.${c.rarity}`),
+              number: `0${i + 1}`,
+            }),
           12,
           hex,
         ).setDepth(202),
       );
       add(label(this.scene, x, 330, c.definition.icon, 58, hex).setDepth(202));
-      add(label(this.scene, x, 418, c.definition.name, 23).setDepth(202));
       add(
-        label(this.scene, x, 466, this.description(c), 16, "#a7bac8")
+        label(this.scene, x, 418, () => t(c.definition.nameKey), 22).setDepth(
+          202,
+        ),
+      );
+      add(
+        label(this.scene, x, 466, () => this.description(c), 16, "#a7bac8")
           .setWordWrapWidth(250)
           .setDepth(202),
       );
@@ -88,33 +90,26 @@ export class UpgradePanel {
           this.scene,
           x,
           545,
-          `LV ${this.upgrades.levels[c.definition.id] ?? 0} → ${(this.upgrades.levels[c.definition.id] ?? 0) + 1}`,
+          () =>
+            t("upgrade.level", {
+              current: this.upgrades.levels[c.definition.id] ?? 0,
+              next: (this.upgrades.levels[c.definition.id] ?? 0) + 1,
+            }),
           13,
           hex,
         ).setDepth(202),
       );
     });
     add(
-      label(
-        this.scene,
-        640,
-        655,
-        "1 / 2 / 3  OR CLICK A CARD    •    SIMULATION PAUSED",
-        12,
-        "#8197aa",
-      )
+      label(this.scene, 640, 655, () => t("upgrade.controls"), 12, "#8197aa")
         .setOrigin(0.5)
         .setDepth(202),
     );
   }
   private description(c: UpgradeChoice) {
-    const m = BALANCE.rarityMultiplier[c.rarity];
-    if (["multi", "pierce"].includes(c.definition.id))
-      return c.definition.description;
-    return c.definition.description.replace(
-      /(\d+)(%?)/,
-      (_match, n: string, suffix: string) =>
-        `${Math.round(Number(n) * m * 10) / 10}${suffix}`,
+    return t(
+      c.definition.descriptionKey,
+      c.definition.descriptionParams(BALANCE.rarityMultiplier[c.rarity]),
     );
   }
   select(i: number) {

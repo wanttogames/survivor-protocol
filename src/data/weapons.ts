@@ -1,5 +1,5 @@
 export const ARC_BOLT = {
-  name: "Pulse Needle",
+  nameKey: "weapon.pulseNeedle.name" as const,
   range: 780,
   lifetime: 1.8,
   spread: 0.13,

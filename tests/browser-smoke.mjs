@@ -33,6 +33,25 @@ try {
   await page.waitForFunction(() =>
     window.__SURVIVOR_GAME__?.scene.isActive("Menu"),
   );
+  assert.equal(await page.locator("html").getAttribute("lang"), "ko");
+  const texts = () =>
+    page.evaluate(() =>
+      window.__SURVIVOR_GAME__.scene
+        .getScenes(true)
+        .flatMap((s) =>
+          s.children.list.filter((o) => o.type === "Text").map((o) => o.text),
+        ),
+    );
+  assert.ok((await texts()).includes("게임 시작   →"));
+  await page.evaluate(async () => {
+    const { setLocale } = await import("/src/i18n/index.ts");
+    setLocale("en");
+  });
+  assert.ok((await texts()).includes("PLAY   →"));
+  await page.evaluate(async () => {
+    const { setLocale } = await import("/src/i18n/index.ts");
+    setLocale("ko");
+  });
   await page.screenshot({ path: "menu-preview.png" });
   await page.keyboard.press("Enter");
   await page.waitForFunction(() =>
@@ -76,7 +95,49 @@ try {
     ),
     time,
   );
+  assert.ok((await texts()).includes("생존 능력을 강화하세요"));
   await page.screenshot({ path: "upgrade-preview.png" });
+  // Verify all ten cards in both locales, including maximum rarity values.
+  for (const locale of ["ko", "en"]) {
+    for (let start = 0; start < 10; start += 3) {
+      const overflow = await page.evaluate(
+        async ({ locale, start }) => {
+          const { setLocale } = await import("/src/i18n/index.ts");
+          const { UPGRADES } = await import("/src/data/upgrades.ts");
+          setLocale(locale);
+          const s = window.__SURVIVOR_GAME__.scene.getScene("Game");
+          s.panel.show(
+            [0, 1, 2].map((i) => ({
+              definition: UPGRADES[(start + i) % 10],
+              rarity: "Epic",
+            })),
+            () => {},
+          );
+          return s.children.list
+            .filter(
+              (o) =>
+                o.type === "Text" &&
+                o.depth === 202 &&
+                o.x < 1000 &&
+                o.y >= 418 &&
+                o.y <= 545,
+            )
+            .filter((o) => o.width > 250 || o.height > 74)
+            .map((o) => o.text);
+        },
+        { locale, start },
+      );
+      assert.deepEqual(overflow, []);
+    }
+  }
+  await page.evaluate(async () => {
+    const { setLocale } = await import("/src/i18n/index.ts");
+    setLocale("ko");
+    const s = window.__SURVIVOR_GAME__.scene.getScene("Game");
+    s.panel.close();
+    s.levels.pending++;
+    s.showUpgrade();
+  });
   await page.keyboard.press("1", { delay: 100 });
   await page.waitForFunction(
     () => !window.__SURVIVOR_GAME__.scene.getScene("Game").panel.open,
@@ -126,6 +187,8 @@ try {
   await page.waitForFunction(() =>
     window.__SURVIVOR_GAME__.scene.isActive("GameOver"),
   );
+  assert.ok((await texts()).includes("게임 오버"));
+  await page.screenshot({ path: "gameover-preview.png" });
   await page.keyboard.press("Enter");
   await page.waitForFunction(() =>
     window.__SURVIVOR_GAME__.scene.isActive("Game"),
@@ -156,6 +219,7 @@ try {
   await page.waitForTimeout(100);
   const bounds = await page.locator("canvas").boundingBox();
   assert.ok(bounds.width <= 390 && bounds.height <= 844);
+  await page.screenshot({ path: "mobile-preview.png" });
   assert.deepEqual(errors, []);
   console.log(
     "Browser smoke passed: movement, auto combat, XP, cards, pause, swarm, death, retry, victory, menu, responsive canvas.",

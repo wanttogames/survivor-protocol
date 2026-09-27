@@ -1,3 +1,4 @@
+import { t, FONT_FAMILY } from "../i18n";
 import Phaser from "phaser";
 import { BALANCE } from "../config/balance";
 import { Player } from "../entities/Player";
@@ -112,7 +113,7 @@ export class GameScene extends Phaser.Scene {
       this,
       640,
       365,
-      "SIMULATION PAUSED\n\nESC TO RESUME",
+      () => t("pause.message"),
       26,
       "#65ffe3",
     )
@@ -238,7 +239,7 @@ export class GameScene extends Phaser.Scene {
       d = {
         text: this.add
           .text(0, 0, "", {
-            fontFamily: "Arial",
+            fontFamily: FONT_FAMILY,
             fontSize: 14,
             fontStyle: "bold",
           })

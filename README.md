@@ -97,3 +97,35 @@ node tests/browser-smoke.mjs
 4. 효과음/음소거, PWA
 
 온라인 저장이나 영구 성장은 핵심 전투 밸런스가 검증된 후 추가합니다.
+
+## 한국어 기본 / 다국어 확장
+
+기본 언어는 브라우저 설정과 무관하게 항상 `ko`입니다.
+
+- `src/i18n/ko.ts`: 한국어 사전
+- `src/i18n/en.ts`: 영어 사전 및 사전 타입
+- `src/i18n/index.ts`: `DEFAULT_LOCALE`, `t`, `setLocale`, `getLocale`, `onLocaleChange`, 폰트 설정
+
+```ts
+import { t, setLocale } from './i18n';
+setLocale('en'); // 영어
+setLocale('ko'); // 한국어
+const text = t('hud.level', { level: 5 });
+```
+
+메뉴·버튼·카드의 번역 레이블은 언어 변경 이벤트로 갱신됩니다. 전투 HUD의 동적 수치는 다음 전투 프레임에서 갱신됩니다.
+번역 이벤트 구독은 텍스트 객체 파괴 시 해제됩니다. 언어 변경으로 Scene이나 전투를 재시작하지 않습니다.
+언어 선택 UI, 브라우저 언어 감지, localStorage 저장은 아직 추가하지 않았습니다.
+
+카드 데이터는 `nameKey`, `descriptionKey`, `descriptionParams`를 사용합니다.
+설명에 표시할 실제 수치는 설정과 희귀도 배수에서 계산하고 `{value}`로 삽입합니다.
+무기는 `weapon.pulseNeedle.name`, 적은 `enemy.grunt.name` 등으로 참조합니다.
+기존 ID(power, rapid 등), 희귀도 ID(Common/Rare/Epic), 전투 로직 및 밸런스는 유지했습니다.
+
+Canvas와 CSS 모두 Pretendard → Noto Sans KR → Malgun Gothic → Apple SD Gothic Neo → Arial → sans-serif 순서로 시스템 폰트를 사용합니다.
+외부 폰트 CDN이나 런타임 폰트 다운로드는 없습니다. 테스트용 한글 폰트는 검증 환경에만 설치했으며 프로젝트에 포함하지 않았습니다.
+
+이번 변경 검증: TypeScript/build 성공, 단위 테스트 8개 통과, 한/영 전환 및 카드 10종 최대 희귀도 텍스트 영역 검사, 한국어 주요 화면과 390×844 반응형 캔버스 확인.
+`menu-preview.png`, `upgrade-preview.png`, `game-preview.png`, `gameover-preview.png`, `mobile-preview.png`에서 검증 화면을 확인할 수 있습니다.
+
+적용: 기존 저장소의 동일 경로에 소스 파일을 반영한 후 `npm run build`로 확인하고 커밋/푸시하세요. 이 ZIP에는 .git과 node_modules가 포함되지 않습니다. 이번 작업에서 GitHub 푸시 또는 Cloudflare 재배포는 수행하지 않았습니다.
