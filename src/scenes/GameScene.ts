@@ -1,3 +1,5 @@
+import { CombatVisuals } from "../theme/CombatVisuals";
+import { addWorldProps } from "../theme/worldProps";
 import { talisman } from "../theme/ornaments";
 import { t, FONT_FAMILY } from "../i18n";
 import Phaser from "phaser";
@@ -31,6 +33,7 @@ export class GameScene extends Phaser.Scene {
   private hud!: Hud;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private pauseText!: Phaser.GameObjects.Text;
+  private visuals!: CombatVisuals;
   private particles!: Phaser.GameObjects.Particles.ParticleEmitter;
   private damageTexts: { text: Phaser.GameObjects.Text; ttl: number }[] = [];
   constructor() {
@@ -56,6 +59,8 @@ export class GameScene extends Phaser.Scene {
       for (let x = 400; x < 3600; x += 800) {
         talisman(marks, x - 20, y - 40, 40, 80, 0x594738);
       }
+    addWorldProps(this, BALANCE.worldSize);
+    this.visuals = new CombatVisuals(this);
     this.player = new Player(this);
     this.cameras.main
       .setBounds(0, 0, BALANCE.worldSize, BALANCE.worldSize)
@@ -80,14 +85,14 @@ export class GameScene extends Phaser.Scene {
     this.spawn = new EnemySpawnSystem(this.enemies);
     this.combat = new CombatSystem(this.player, this.enemies, this.bolts);
     this.particles = this.add
-      .particles(0, 0, "spark", {
+      .particles(0, 0, "ash", {
         emitting: false,
-        lifespan: 300,
+        lifespan: 440,
         speed: { min: 30, max: 100 },
         scale: { start: 1, end: 0 },
         alpha: { start: 0.8, end: 0 },
         maxParticles: BALANCE.limits.particles,
-        tint: [0xb8a16a, 0x9daba4],
+        tint: [0x263337, 0x82b5b5, 0x5c7a82],
       })
       .setDepth(6);
     this.physics.add.overlap(boltGroup, enemyGroup, (a, b) => {
@@ -95,6 +100,7 @@ export class GameScene extends Phaser.Scene {
       const enemy = b as Enemy;
       if (!this.combat.hit(bolt, enemy)) return;
       this.damage(enemy.x, enemy.y, Math.round(bolt.damage), bolt.critical);
+      this.visuals.hit(enemy.x, enemy.y);
       if (enemy.hp <= 0) this.kill(enemy);
     });
     this.physics.add.overlap(this.player, enemyGroup, (_p, e) => {
@@ -103,6 +109,7 @@ export class GameScene extends Phaser.Scene {
       this.player.stats.hp = Math.max(0, this.player.stats.hp - enemy.damage);
       this.player.invulnerable = BALANCE.contactInvulnerability;
       this.cameras.main.shake(90, 0.003);
+      this.visuals.playerHit();
       if (this.player.stats.hp <= 0) this.finish(false);
     });
     this.keys = this.input.keyboard!.addKeys(
@@ -146,6 +153,7 @@ export class GameScene extends Phaser.Scene {
   }
   update(_time: number, delta: number) {
     if (this.ended) return;
+    this.visuals.update(Math.min(delta / 1000, 0.05));
     if (this.panel.open) {
       if (Phaser.Input.Keyboard.JustDown(this.keys.ONE)) this.panel.select(0);
       else if (Phaser.Input.Keyboard.JustDown(this.keys.TWO))
@@ -260,6 +268,7 @@ export class GameScene extends Phaser.Scene {
     if (!this.levels.consume()) return;
     this.physics.pause();
     this.particles.pause();
+    this.visuals.awaken(this.player.x, this.player.y);
     this.cameras.main.flash(100, 184, 161, 106, false);
     this.panel.show(this.upgrades.roll(), (choice) => {
       this.upgrades.apply(choice, this.player.stats);

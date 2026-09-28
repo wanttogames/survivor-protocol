@@ -31,6 +31,6 @@ export class Projectile extends Phaser.Physics.Arcade.Sprite {
     this.critical = critical;
     this.ttl = ttl;
     this.hits.clear();
-    this.setTint(critical ? 0xd7bd7d : 0xb8a16a);
+    this.setTint(critical ? 0xffe2a0 : 0xffffff);
   }
 }

@@ -3,6 +3,7 @@ import { BALANCE, type PlayerStats } from "../config/balance";
 export class Player extends Phaser.Physics.Arcade.Sprite {
   stats: PlayerStats = { ...BALANCE.player };
   invulnerable = 0;
+  private walkTime = 0;
   constructor(scene: Phaser.Scene) {
     super(scene, BALANCE.worldSize / 2, BALANCE.worldSize / 2, "player");
     scene.add.existing(this);
@@ -15,7 +16,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       (x / length) * this.stats.moveSpeed,
       (y / length) * this.stats.moveSpeed,
     );
-    if (x || y) this.rotation = Math.atan2(y, x) + Math.PI / 2;
+    this.walkTime += dt;
+    this.rotation = 0;
+    if (x) this.setFlipX(x < 0);
+    this.setTexture(
+      x || y
+        ? `player-walk-${1 + (Math.floor(this.walkTime * 8) % 2)}`
+        : "player",
+    );
     this.invulnerable = Math.max(0, this.invulnerable - dt);
     this.setAlpha(
       this.invulnerable > 0 ? 0.55 + Math.sin(this.invulnerable * 45) * 0.2 : 1,

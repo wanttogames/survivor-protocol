@@ -40,7 +40,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       dy = y - this.y,
       l = Math.hypot(dx, dy) || 1;
     this.setVelocity((dx / l) * this.speed, (dy / l) * this.speed);
-    this.rotation = Math.atan2(dy, dx);
+    this.rotation = 0;
+    this.setFlipX(dx < 0);
     if (this.flash > 0) {
       this.flash -= dt;
       if (this.flash <= 0) this.clearTint();

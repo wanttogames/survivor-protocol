@@ -150,6 +150,17 @@ try {
     ),
     1,
   );
+  await page.waitForTimeout(750);
+  await page.evaluate(()=>{
+    const s=window.__SURVIVOR_GAME__.scene.getScene('Game');
+    s.paused=true;s.physics.pause();s.player.setAlpha(1);
+    const x=s.player.x,y=s.player.y;
+    ['grunt','runner','tank'].forEach((kind,i)=>s.enemies.acquire()?.spawn(x+140+i*125,y-70,kind,1,0));
+    for(let i=0;i<5;i++)s.orbs.acquire()?.spawn(x+130+i*45,y+95,2);
+    s.bolts.acquire()?.fire(x+85,y-20,0,0,1,0,false,5);
+  });
+  await page.screenshot({path:'objects-preview.png'});
+  await page.evaluate(()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');s.paused=false;s.physics.resume()});
   await page.keyboard.press("Escape", { delay: 100 });
   assert.equal(
     await page.evaluate(
