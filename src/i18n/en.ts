@@ -1,4 +1,5 @@
 export const en = {
+  audio: {enabled:"M · SOUND ON",muted:"M · MUTED"},
   meta: {
     title: "GUIYA | Night of Spirits",
     description:

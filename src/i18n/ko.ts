@@ -1,5 +1,6 @@
 import type { LocaleMessages } from "./en";
 export const ko = {
+  audio: {enabled:"M · 소리 켜짐",muted:"M · 음소거"},
   meta: {
     title: "귀야 | GUIYA",
     description:

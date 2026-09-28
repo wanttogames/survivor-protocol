@@ -1,62 +1,38 @@
+import { AudioManager } from "../audio/AudioManager";
+import { addAudioControls } from "../audio/audioControls";
 import { nightBackdrop, frame } from "../theme/ornaments";
 import { t } from "../i18n";
 import Phaser from "phaser";
 import { label, button, timeLabel } from "../ui/common";
 export interface RunResult {
-  time: number;
-  level: number;
-  kills: number;
-  won: boolean;
+    time: number;
+    level: number;
+    kills: number;
+    won: boolean;
 }
 export class GameOverScene extends Phaser.Scene {
-  constructor() {
-    super("GameOver");
-  }
-  create(result: RunResult) {
-    nightBackdrop(this);
-    this.add.rectangle(640, 390, 940, 590, 0x10151a, 0.88);
-    frame(this.add.graphics(), 170, 95, 940, 590);
-    label(
-      this,
-      640,
-      165,
-      () => t(result.won ? "gameOver.won" : "gameOver.lost"),
-      14,
-      result.won ? "#b8a16a" : "#b86451",
-    ).setOrigin(0.5);
-    label(
-      this,
-      640,
-      226,
-      () => t(result.won ? "gameOver.wonMessage" : "gameOver.lostMessage"),
-      45,
-    ).setOrigin(0.5);
-    const values = [
-      timeLabel(result.time),
-      String(result.level),
-      String(result.kills),
-    ];
-    (["gameOver.time", "gameOver.level", "gameOver.kills"] as const).forEach(
-      (key, i) => {
-        const x = 390 + i * 250;
-        label(this, x, 350, values[i], 44, "#b8a16a").setOrigin(0.5);
-        label(this, x, 406, () => t(key), 12, "#a69e8c").setOrigin(0.5);
-      },
-    );
-    button(
-      this,
-      640,
-      515,
-      () => t("gameOver.retry"),
-      () => this.scene.start("Game"),
-    );
-    button(
-      this,
-      640,
-      593,
-      () => t("gameOver.mainMenu"),
-      () => this.scene.start("Menu"),
-    );
-    this.input.keyboard?.once("keydown-ENTER", () => this.scene.start("Game"));
-  }
+    constructor() {
+        super("GameOver");
+    }
+    create(result: RunResult) {
+        addAudioControls(this);
+        nightBackdrop(this);
+        this.add.rectangle(640, 390, 940, 590, 0x10151a, 0.88);
+        frame(this.add.graphics(), 170, 95, 940, 590);
+        label(this, 640, 165, () => t(result.won ? "gameOver.won" : "gameOver.lost"), 14, result.won ? "#b8a16a" : "#b86451").setOrigin(0.5);
+        label(this, 640, 226, () => t(result.won ? "gameOver.wonMessage" : "gameOver.lostMessage"), 45).setOrigin(0.5);
+        const values = [
+            timeLabel(result.time),
+            String(result.level),
+            String(result.kills),
+        ];
+        (["gameOver.time", "gameOver.level", "gameOver.kills"] as const).forEach((key, i) => {
+            const x = 390 + i * 250;
+            label(this, x, 350, values[i], 44, "#b8a16a").setOrigin(0.5);
+            label(this, x, 406, () => t(key), 12, "#a69e8c").setOrigin(0.5);
+        });
+        button(this, 640, 515, () => t("gameOver.retry"), () => { AudioManager.forGame(this.game).unlock(); this.scene.start("Game"); });
+        button(this, 640, 593, () => t("gameOver.mainMenu"), () => this.scene.start("Menu"));
+        this.input.keyboard?.once("keydown-ENTER", () => { AudioManager.forGame(this.game).unlock(); this.scene.start("Game"); });
+    }
 }

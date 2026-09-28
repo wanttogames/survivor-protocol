@@ -187,3 +187,21 @@ Vite의 큰 Phaser 번들 권고 경고는 남아 있습니다.
 시각 확인용 `objects-preview.png`에 플레이어·적 3종·부적·혼백 조각을 함께 배치했습니다.
 
 3차 후보: 방향별 걷기·피격 프레임 보강, 소규모 조선풍 지형 타일, 효과음과 음소거. 이번 작업에는 신규 무기·보스·시스템을 추가하지 않았습니다.
+
+## 3차 실제 사운드 연결
+
+- `src/audio/AudioManager.ts`: 게임당 하나의 관리자, 미리 생성한 SFX 12개와 BGM 1개 재사용. master/SFX/BGM 볼륨 및 음소거 제어.
+- `audioKeys.ts`, `audioConfig.ts`: 키·OGG 경로·볼륨·재생 간격·동시 재생 상한·미세한 rate 변화 설정.
+- `preloadAudio.ts`: Boot에서 한 번 로드. 누락 파일은 경고 후 해당 소리만 생략.
+- `audioControls.ts`: 시작/첫 입력에서 AudioContext 활성화. M 또는 우측 아래 상태 표시 클릭으로 음소거, localStorage 저장.
+- `public/audio/`: 제공된 사운드팩의 OGG 9개 포함. 외부 CDN 없음.
+- 실제 발사, 적 피격/사망, 혼백 획득, 각성, 카드 선택, 플레이어 피격/사망에 연결. 무적 중 피격음은 재생하지 않음.
+- BGM은 Game 진입 시 반복, 레벨업 중 유지, 종료/메뉴에서 정지. Retry에서도 동일 객체 사용.
+- 일반 효과음 최대 8개, 중요 효과음 포함 최대 12개. hit 50ms / death 70ms / pickup 45ms / player-hit 160ms 제한.
+- 기존 이동·전투 수치·스폰·카드 효과는 유지. CombatSystem에는 실제 발사 시 호출하는 선택적 콜백만 추가.
+- Vite BASE_URL 사용: 기본 배포에서 `/audio/sfx/*.ogg`, `/audio/bgm/night-stage.ogg`. `dist`에 실제 파일 복사됨. Cloudflare Pages에는 dist 배포.
+
+검증: `npm run build`, `npm test` (8개), `npm run test:audio`.
+오디오 브라우저 테스트는 Chromium 설치 후 실행 (`npx playwright install chromium`), 또는 `CHROMIUM_EXECUTABLE_PATH` 지정.
+헤드리스 Chromium에서 9개 파일 로드, 오디오 믹서의 실제 비영점 출력, 8개 이벤트, BGM 루프, 각성 중 BGM 유지, 무적, 재생 제한, 사망 후 공격음 정지, Retry 3회, mute 저장/새로고침, 누락 파일 허용을 확인.
+실제 스피커 청취 및 모바일/다른 브라우저 청취 품질 검증은 별도 필요.
