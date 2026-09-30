@@ -446,3 +446,42 @@ npm run test:browser
 - 미리보기: `boss-general-preview.png`, `boss-king-preview.png`, `boss-reward-preview.png`, `boss-victory-preview.png`.
 
 이 결과는 작업 환경 프로젝트 사본이며 Windows 폴더/GitHub/Cloudflare에는 직접 반영하지 않았습니다. Cloudflare Pages에서는 기존대로 `npm run build` / 출력 `dist`를 사용합니다.
+
+## 8차 월하촌 맵
+
+월하촌(`moonlit-village`)은 3,600 × 3,600 월드의 첫 번째 맵입니다. 시작점은 (1800, 2400)의 마을길입니다. 흙길이 버려진 민가, 장승 입구와 장승길, 공동묘지의 큰 고목, 폐사당과 봉인터를 연결합니다. 자유 이동을 유지하고 건물 내부, 미니맵, 신규 적/무기/보스/오디오는 추가하지 않습니다.
+
+### 구조 및 생성
+
+- `src/maps/mapDefinitions.ts`: MapDefinition, 6개 분위기 구역, 3개 연결 길, 고정 랜드마크와 시각적 스폰 제외 영역.
+- `MapManager.ts`: run별 맵 인스턴스 생성/업데이트/보스 분위기/파괴. GameScene은 이 인터페이스만 호출합니다.
+- `MoonlitVillageMap.ts`: 고정 마을 구조, run마다 조금 달라지는 작은 소품, 시작 이름 표시, 분위기와 화면 밖 청크 처리.
+- `mapTextures.ts`: Canvas 기반 기와집/사당/장승 4형태/고목/봉분/비석/담/울타리/장독/상자/제단/등불/부적/안개/봉인 문양 생성.
+- `spawnSafety.ts`: 월드 안 좌표와 민가/사당/큰 바위의 시각적 footprint를 확인하고 보정. 일반 적, 엘리트, 보스, 귀문/소환 적 경로에서 공유합니다.
+
+큰 랜드마크도 충돌 없는 배경입니다. 작은 장식이나 집 때문에 플레이어나 직선 추적 적이 막히지 않습니다. 스폰만 건축물/큰 바위 시각 영역에서 벗어나도록 보정하며 navigation/pathfinding은 추가하지 않습니다. 새 맵은 정의/renderer를 MapManager에 연결하는 방식으로 확장하며 GameScene을 복사하지 않습니다.
+
+지형과 정적 소품을 36개 청크로 함께 구워 표시합니다. 청크 하나의 실제 텍스처는 300 × 300이며 월드에서는 600 × 600으로 표시합니다. 정적 소품 수백 개를 개별 live sprite로 렌더링하거나 매 프레임 다시 그리지 않습니다. 기본 지형/소품 텍스처는 게임 내에서 재사용하며 run별 합성 청크는 shutdown에서 제거합니다. 화면 밖 청크는 0.25초 간격으로 숨깁니다. 배경 캐시의 RGBA 픽셀 예산은 기본/합성 지형 합계 약 25 MiB이며 소품 텍스처가 별도로 소량 추가됩니다.
+
+동적 장식은 안개 8개, 도깨비불 12개, 작은 부적 8개, 연기 3개, 등불 glow 6개와 봉인터 문양뿐입니다. 안개/도깨비불은 낮은 alpha이고 모든 맵 효과의 depth는 혼백/적/플레이어/공격 예고보다 낮습니다. Physics body, particle emitter, post-processing filter는 만들지 않습니다.
+
+원귀 장군: 안개 농도와 지형 색조가 약간 변합니다. 귀왕: 안개/도깨비불 밝기/검은 연기 강화, 붉은 봉인 문양과 낮은 alpha의 원형 파동, 부적 흔들림. 보스가 사라지면 분위기가 복구되고 귀왕 처치 시 푸른 봉인 상태로 전환한 후 기존 승리 화면으로 넘어갑니다. 승리 화면 전환을 지연시키지는 않습니다.
+
+Retry에서 장식/안개/문양/분위기/시간을 새로 만들고 이전 인스턴스와 합성 청크를 제거합니다. 캐시 텍스처 수와 맵 레이어 수는 늘어나지 않습니다. 카메라와 물리 월드 경계는 같은 MapDefinition 크기를 사용합니다. 한국어/영어 맵 이름/설명은 기존 i18n을 사용하며 BGM/SFX는 기존 파일을 유지합니다.
+
+### 검증
+
+```bash
+npm run build
+npm test
+npm run test:map
+npm run test:bosses
+npm run test:evolution
+npm run test:browser
+```
+
+`tests/maps.test.ts`는 footprint/경계/보스 거리/지도 데이터/번역을 확인합니다. `tests/maps-browser.mjs`는 실제 메뉴 → 게임 시작, 6구역, 키보드 이동, 카메라/월드 경계, 게임 update를 통한 엘리트/원귀 장군/귀왕 등장, 일반/소환 스폰 안전성, 무기/진화/혼백 가독성, 350마리 이상 상황의 맵 update 비용, 이전 배경 대비 프레임 시간, 사망 → Retry 정리, 모바일 canvas 크기를 확인합니다. 시간 분기는 2/5/10분 문턱으로 이동하여 검증하며 실제 10분 연속 플레이 테스트는 아닙니다. 헤드리스 Chromium/SwiftShader는 소프트웨어 렌더링이므로 실기기 FPS를 보증하지 않습니다.
+
+구역별 실제 화면은 `map-previews/`에 있습니다. Windows 프로젝트/GitHub/Cloudflare에는 직접 반영하지 않았습니다. 반영용 ZIP의 같은 상대경로 파일을 병합한 뒤 다시 빌드하세요.
+
+최종 실행 기록: 단위 테스트 35/35, map/bosses/evolution/browser Chromium 테스트 통과. 월하촌 생성, 6구역, 이동, 보스/소환 스폰 보정, 보상·승리·Retry, 390×844 canvas, 오류/404 없음 확인. 일반 적 364마리의 제어된 장면에서 맵 update p95 0.1ms. 같은 장면의 프레임 중앙값은 월하촌 92.9ms / 기존 grid+소품 배경 83.2ms였으며 p95는 115.0ms / 120.4ms였습니다. 소프트웨어 렌더링에서 배경 비용이 추가되므로 FPS가 동일하다고 보장하지 않습니다. GPU 실기기 및 실제 10분 연속 플레이는 별도 확인 대상입니다. 최종 TypeScript/build 성공, 기존 청크 크기 권고 경고만 남습니다.

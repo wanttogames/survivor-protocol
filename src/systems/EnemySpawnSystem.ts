@@ -1,3 +1,4 @@
+import { safeMapSpawn } from '../maps/spawnSafety';
 import { BALANCE } from "../config/balance";
 import type { EnemyKind } from "../data/enemies";
 import type { Enemy } from "../entities/Enemy";
@@ -33,9 +34,10 @@ export class EnemySpawnSystem {
           : t >= BALANCE.spawn.runnerAt && r < 0.5
             ? "runner"
             : "grunt";
+      const safe = safeMapSpawn(sx, sy);
       enemy.spawn(
-        sx,
-        sy,
+        safe.x,
+        safe.y,
         kind,
         1 + (t / 60) * BALANCE.spawn.hpPerMinute,
         1 + (t / 60) * BALANCE.spawn.speedPerMinute,

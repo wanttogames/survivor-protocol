@@ -1,0 +1,15 @@
+MOD src/bosses/BossManager.ts
+MOD src/encounters/spawnPoint.ts
+MOD src/i18n/en.ts
+MOD src/i18n/ko.ts
+NEW src/maps/MapManager.ts
+NEW src/maps/MoonlitVillageMap.ts
+NEW src/maps/mapDefinitions.ts
+NEW src/maps/mapTextures.ts
+NEW src/maps/spawnSafety.ts
+MOD src/scenes/GameScene.ts
+MOD src/systems/EnemySpawnSystem.ts
+NEW tests/maps-browser.mjs
+NEW tests/maps.test.ts
+MOD README.md
+MOD package.json

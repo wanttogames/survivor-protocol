@@ -1,3 +1,4 @@
+import { safeMapSpawn } from '../maps/spawnSafety';
 import type Phaser from 'phaser';
 import type { Enemy } from '../entities/Enemy';
 import type { Pool } from '../utils/Pool';
@@ -104,7 +105,8 @@ export class BossManager {
         const e = this.enemies.acquire();
         if (!e)
             return;
-        e.spawn(Math.max(C.worldMargin, Math.min(BALANCE.worldSize - C.worldMargin, x)), Math.max(C.worldMargin, Math.min(BALANCE.worldSize - C.worldMargin, y)), kind, C.minionHpScale, C.minionSpeedScale);
+        const safe = safeMapSpawn(Math.max(C.worldMargin, Math.min(BALANCE.worldSize - C.worldMargin, x)), Math.max(C.worldMargin, Math.min(BALANCE.worldSize - C.worldMargin, y)));
+        e.spawn(safe.x, safe.y, kind, C.minionHpScale, C.minionSpeedScale);
         this.summonAlive.set(e, e.generation);
     }
     private startCast(s: State, type: Cast['type']) {
@@ -206,7 +208,8 @@ export class BossManager {
                         g.life = C.gateLifetime;
                         g.tick = C.gateInitialDelay;
                         g.spawned = 0;
-                        g.image.setPosition(Math.max(C.worldMargin, Math.min(BALANCE.worldSize - C.worldMargin, this.player.x + Math.cos(a) * d.summon.radius)), Math.max(C.worldMargin, Math.min(BALANCE.worldSize - C.worldMargin, this.player.y + Math.sin(a) * d.summon.radius))).setVisible(true);
+                        const safe = safeMapSpawn(this.player.x + Math.cos(a) * d.summon.radius, this.player.y + Math.sin(a) * d.summon.radius);
+                        g.image.setPosition(safe.x, safe.y).setVisible(true);
                     }
             }
             this.telegraph.lineStyle(b.phase === 2 ? 4 : 2, b.phase === 2 ? 0xa16387 : 0xa7794f, .55).strokeCircle(b.x, b.y, b.collisionRadius + 15);

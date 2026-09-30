@@ -1,5 +1,6 @@
 import type { LocaleMessages } from "./en";
 export const ko = {
+  map: { moonlitVillage: { name: "월하촌", description: "귀문이 열린 버려진 마을" } },
   boss: {
     "general": {
       "name": "원귀 장군"

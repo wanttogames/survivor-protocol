@@ -1,3 +1,4 @@
+import { MapManager } from '../maps/MapManager';
 import { BossManager } from '../bosses/BossManager';
 import { Boss } from '../bosses/Boss';
 import { BossRewardManager } from '../bosses/BossRewardManager';
@@ -13,8 +14,6 @@ import { AUDIO_KEYS as K } from "../audio/audioKeys";
 import { AudioManager } from "../audio/AudioManager";
 import { addAudioControls } from "../audio/audioControls";
 import { CombatVisuals } from "../theme/CombatVisuals";
-import { addWorldProps } from "../theme/worldProps";
-import { talisman } from "../theme/ornaments";
 import { t, FONT_FAMILY } from "../i18n";
 import Phaser from "phaser";
 import { BALANCE } from "../config/balance";
@@ -32,6 +31,7 @@ import { Hud } from "../ui/Hud";
 import { UpgradePanel } from "../ui/UpgradePanel";
 import { label } from "../ui/common";
 export class GameScene extends Phaser.Scene {
+    mapManager!: MapManager;
     bosses!: BossManager;
     encounters!: EncounterManager;
     bossRewards!: BossRewardManager;
@@ -82,19 +82,16 @@ export class GameScene extends Phaser.Scene {
         this.paused = false;
         this.ended = false;
         this.damageTexts = [];
-        this.physics.world.setBounds(0, 0, BALANCE.worldSize, BALANCE.worldSize);
+        this.mapManager = new MapManager(this);
+        this.physics.world.setBounds(0, 0, this.mapManager.definition.width, this.mapManager.definition.height);
         this.physics.world.resume();
-        this.add.tileSprite(BALANCE.worldSize / 2, BALANCE.worldSize / 2, BALANCE.worldSize, BALANCE.worldSize, "grid");
-        const marks = this.add.graphics().lineStyle(3, 0xb8a16a, 0.12);
-        for (let y = 400; y < 3600; y += 800)
-            for (let x = 400; x < 3600; x += 800) {
-                talisman(marks, x - 20, y - 40, 40, 80, 0x594738);
-            }
-        addWorldProps(this, BALANCE.worldSize);
+        this.mapManager.create();
         this.visuals = new CombatVisuals(this);
         this.player = new Player(this, getCharacterManager().character);
+        this.player.setPosition(this.mapManager.definition.start.x, this.mapManager.definition.start.y);
         this.cameras.main
-            .setBounds(0, 0, BALANCE.worldSize, BALANCE.worldSize)
+            .setBounds(0, 0, this.mapManager.definition.width, this.mapManager.definition.height)
+            .centerOn(this.player.x, this.player.y)
             .startFollow(this.player, true, 0.12, 0.12);
         const enemyGroup = this.physics.add.group();
         const boltGroup = this.physics.add.group();
@@ -176,6 +173,7 @@ export class GameScene extends Phaser.Scene {
             this.bossHud.destroy();
             this.elites.destroy();
             this.announcement.destroy();
+            this.mapManager.destroy();
             this.progress.flush();
             this.audio.stopBgm();
             if (!this.ended)
@@ -183,6 +181,7 @@ export class GameScene extends Phaser.Scene {
         });
         this.cameras.main.fadeIn(250);
         this.hud.update(this.player, this.levels, 0, 0);
+        this.mapManager.update(0, [], false);
     }
     private hurtPlayer(damage: number) {
         if (this.ended || this.paused || this.panel.open || this.player.invulnerable > 0)
@@ -247,6 +246,7 @@ export class GameScene extends Phaser.Scene {
         this.elites.update(dt);
         this.weapons.update(dt);
         this.bossHud.update();
+        this.mapManager.update(dt, this.bosses.activeBosses.map(b => b.definition.id), this.bosses.finalDefeated);
         if (this.bosses.finalDefeated) {
             this.finish(true);
             return;
@@ -282,6 +282,7 @@ export class GameScene extends Phaser.Scene {
         if (enemy instanceof Boss) {
             const id = enemy.definition.id;
             this.bosses.defeated(enemy);
+            this.mapManager.bossDefeated(id);
             this.runStats.bossKills++;
             this.runStats.bossesDefeated.push(id);
             this.progress.bossKill(id);

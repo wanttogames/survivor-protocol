@@ -1,4 +1,5 @@
 export const en = {
+  map: { moonlitVillage: { name: "Moonlit Village", description: "An abandoned village beyond the spirit gate" } },
   boss: {
     "general": {
       "name": "Vengeful General"
