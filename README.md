@@ -266,3 +266,63 @@ Vite의 큰 Phaser 번들 권고 경고는 남아 있습니다.
 6종 동시 전투 중앙 프레임 66.6ms, p95 83.3ms. 동일 적 배치의 파사부 단독 비교 중앙값도 66.6ms였으며, 무기 update 자체 p95는 1.3ms였습니다.
 따라서 이 환경에서는 무기 추가에 따른 큰 프레임 저하는 관찰되지 않았으나, 실제 GPU PC/모바일의 60FPS를 보증하는 결과는 아닙니다.
 단위 테스트 12개, 기존 플레이/오디오 및 신규 무기 브라우저 테스트 통과. 실제 Cloudflare 재배포는 수행하지 않았습니다.
+
+## 5차 캐릭터 선택과 해금
+
+메인 메뉴 → 캐릭터 선택 → 출정 → 결과 → Retry / 메인 화면.
+처음에는 퇴마사만 해금됩니다. 잠긴 5종도 카드와 목표/진행도를 표시합니다.
+
+| 인물 (ID) | 시작 무기 Lv1 | 고유 패시브 | 해금 조건 |
+|---|---|---|---|
+| 퇴마사 (`exorcist`) | 파사부 | 모든 공격력 +5% | 기본 |
+| 무녀 (`shaman`) | 퇴마방울 | 혼백 흡수 범위 +25% | 누적 혼백 1,000 |
+| 무관 (`warrior`) | 벽력검 | 최대 체력 +25% | 한 판 처치 1,000 |
+| 궁수 (`archer`) | 귀살화살 | 투사체 속도 +15%, 관통 +1 | 한 판 10분 생존 |
+| 승려 (`monk`) | 염주 | 받는 피해 -10% | 염주 Lv5 |
+| 금기술사 (`forbidden_sorcerer`) | 업화진 | 모든 공격력 +20%, 최대 체력 -20% | 업화진 누적 처치 500 |
+
+### 코드와 저장
+
+- `src/characters/characterTypes.ts`: ID, 정의, 해금 조건, 시각 설정 타입.
+- `characterDefinitions.ts`: 모든 수치/조건/시작 무기/번역 키/색상 정의와 데이터 기반 패시브 적용.
+- `CharacterManager.ts`: 선택 인물과 잠긴/알 수 없는 저장 ID fallback.
+- `CharacterUnlockManager.ts`: 조건 검사, 누적값, 중복 해금 방지, 버전1 세이브 검증, 저장 및 결과 알림 목록.
+- `characterVisuals.ts`: 기존 캐릭터에 리본/어깨 갑주/활/염주/인장 장식과 색조. 이동 프레임을 유지하며 정교한 캐릭터 아트는 포함하지 않음.
+- `CharacterSelectScene.ts`: 3×2 카드, 잠김/해금/선택 상태, 조건과 진행도, 출정·메인 버튼. Enter 출정, ESC 메인.
+- `Player`: 새로운 run에서 패시브를 한 번 적용. 기존 업그레이드와 누적됨. HP는 수정된 최대 HP로 시작.
+- `WeaponLoadout`, `WeaponSystem`: 선택 캐릭터의 시작 무기만 생성. 파사부가 없어도 화살/투사체 TTL과 충돌은 작동하도록 수명·충돌 처리를 공통화.
+- `GameScene`: 혼백 실제 흡수, 처치 무기 ID, 카드 무기 단계, 생존 시간/종료 결과를 진행도로 전달.
+- `GameOverScene`: 이번 run의 새 해금 인물 표시. Retry는 저장된 동일 인물·Lv1 시작 무기를 다시 적용.
+- 메뉴/HUD 안내도 현재 인물에 맞게 표시. i18n 한/영 이름·소개·패시브·조건·선택 UI 추가.
+
+저장 키:
+
+- `survivor-protocol.selectedCharacter`: 마지막 선택 ID.
+- `survivor-protocol.progress`: `{version:1,totalSoulCollected,maxKillsInRun,maxSurvivalTime,weaponMaxLevels,weaponKillCounts,unlockedCharacters}`.
+- 기존 음소거 저장 키는 유지.
+
+혼백 누적은 실제 흡수한 혼백 가치/경험치량(`orb.value`)을 더합니다. 원혼 처치만으로 혼백 수가 증가하지 않습니다.
+처치는 최종 피해를 가한 무기에 귀속되므로 업화진 해금은 업화진의 실제 처치만 집계합니다.
+평소 localStorage 쓰기는 게임시간 약 1초마다 묶어 처리하고, 새 해금·종료·pagehide에서는 즉시 저장합니다.
+잘못된 JSON, 지원하지 않는 버전, 불필요한 ID/비정상 값은 안전한 기본값 또는 제한된 값으로 처리합니다. 저장 접근이 차단되면 현재 세션은 메모리에서 진행합니다.
+
+개발 환경 콘솔 전용:
+
+```js
+window.__GUIYA_CHARACTERS__.unlocks.progress
+window.__GUIYA_RESET_PROGRESS__()
+```
+
+RESET 버튼은 없으며 위 window 도구는 Vite DEV에서만 노출됩니다.
+
+### 검증
+
+`npm run build`, `npm test`, `npm run test:characters` 및 기존 browser/audio/weapons 테스트.
+제한된 테스트 실행 환경에서는 `node --import tsx --test --test-isolation=none tests/*.test.ts`로 16개 개별 단위 테스트 확인.
+첫 상태, 잠긴 5카드, 모든 해금 조건 경계값, 실제 혼백/처치/무기강화/승리 이벤트, 세이브 복원/손상 fallback을 검증했습니다.
+각 캐릭터의 시작 무기만 보유, 실제 공격 발생, 패시브 수치, 승려 접촉 피해 9(기본10), 시작 무기 강화/다른 무기 획득, 6인 모두 Retry 유지, 새로고침 선택 복원 확인.
+한/영 카드 크기 검증과 한글 시각 확인용 `characters-locked-preview.png`, `characters-unlocked-preview.png` 포함.
+기존 적 AI/스폰/적 수치/무기 성장 수치/업그레이드 수치/AudioManager/사운드팩은 유지했습니다. 캐릭터 패시브로 실제 전투 수치는 달라집니다.
+향후 `CharacterDefinition.visual`에 정지/걷기 텍스처 키 세트를 추가하고 Player의 텍스처 선택을 연결하여 개별 아트로 교체할 수 있습니다.
+
+이 ZIP은 작업 환경의 프로젝트 사본입니다. `C:\work\survivor-protocol` 및 GitHub/Cloudflare에는 직접 반영하지 않았습니다.

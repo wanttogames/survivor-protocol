@@ -1,5 +1,59 @@
 import type { LocaleMessages } from "./en";
 export const ko = {
+  character:{
+  "exorcist": {
+    "name": "퇴마사",
+    "description": "부적과 술법을 다루는 퇴마인.\n균형 잡힌 힘으로 귀물을 막습니다.",
+    "passive": "모든 공격력 +5%"
+  },
+  "shaman": {
+    "name": "무녀",
+    "description": "혼령의 기운을 읽는 무녀.\n멀리 떨어진 혼백까지 끌어당깁니다.",
+    "passive": "혼백 흡수 범위 +25%"
+  },
+  "warrior": {
+    "name": "무관",
+    "description": "귀물을 베는 데 특화된 무관.\n강인한 체력으로 전장을 버팁니다.",
+    "passive": "최대 체력 +25%"
+  },
+  "archer": {
+    "name": "궁수",
+    "description": "귀물의 약점을 꿰뚫는 사수.\n빠른 관통 공격에 특화되어 있습니다.",
+    "passive": "투사체 속도 +15% · 관통 +1"
+  },
+  "monk": {
+    "name": "승려",
+    "description": "염주와 호신법으로 자신을 지키는 수행자.\n귀물에 둘러싸여도 쉽게 무너지지 않습니다.",
+    "passive": "받는 피해 -10%"
+  },
+  "forbidden_sorcerer": {
+    "name": "금기술사",
+    "description": "금지된 술법을 사용하는 술사.\n강력한 힘의 대가로 육신을 희생합니다.",
+    "passive": "모든 공격력 +20% · 최대 체력 -20%"
+  },
+  "select": {
+    "title": "퇴마인을 고르세요",
+    "guide": "해금 조건을 달성해 새로운 퇴마인을 만나세요",
+    "selected": "선택됨",
+    "available": "해금됨",
+    "locked": "잠김",
+    "weapon": "시작 무기 · {name}",
+    "passive": "고유 능력 · {value}",
+    "choose": "선택",
+    "begin": "{name} · 출정",
+    "back": "메인 화면",
+    "progress": "진행 · {current} / {target}",
+    "unlocked": "새 인물 해금 · {names}"
+  },
+  "unlock": {
+    "default": "기본 해금",
+    "souls": "누적 혼백 {target} 획득",
+    "runKills": "한 판에서 귀물 {target}마리 처치",
+    "survival": "한 판에서 {target} 생존",
+    "weaponLevel": "{weapon} {target}단계 달성",
+    "weaponKills": "{weapon}으로 누적 {target}마리 처치"
+  }
+},
   audio: {enabled:"M · 소리 켜짐",muted:"M · 음소거"},
   meta: {
     title: "귀야 | GUIYA",
@@ -15,9 +69,10 @@ export const ko = {
     play: "시작",
     moveGuide: "이동   WASD / 방향키",
     autoAttack: "공격은 자동으로 진행됩니다   •   ESC 일시정지",
-    sector: "퇴마사 · 파사부\n새벽까지 열 분",
+    sector: "{character} · {weapon}\n새벽까지 열 분",
   },
   hud: {
+    characterBuild:"{character}   /   치명타 {critical}%",
     weapons: "무기 {count}/{max}",
     hp: "체력",
     level: "레벨 {level}",

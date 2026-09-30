@@ -1,4 +1,58 @@
 export const en = {
+  character:{
+  "exorcist": {
+    "name": "Exorcist",
+    "description": "A balanced practitioner of talismans\nand spirit arts.",
+    "passive": "All attack damage +5%"
+  },
+  "shaman": {
+    "name": "Shaman",
+    "description": "Reads the presence of spirits and\ngathers distant soul fragments.",
+    "passive": "Soul pickup radius +25%"
+  },
+  "warrior": {
+    "name": "Warrior",
+    "description": "A hardened officer who holds the line\nand cuts down restless spirits.",
+    "passive": "Maximum HP +25%"
+  },
+  "archer": {
+    "name": "Archer",
+    "description": "A marksman who pierces a spirit’s\nweak point with swift arrows.",
+    "passive": "Projectile speed +15% · Pierce +1"
+  },
+  "monk": {
+    "name": "Monk",
+    "description": "A disciplined guardian with prayer\nbeads and protective rites.",
+    "passive": "Damage taken -10%"
+  },
+  "forbidden_sorcerer": {
+    "name": "Forbidden Sorcerer",
+    "description": "Trades bodily strength for the power\nof forbidden spirit arts.",
+    "passive": "All damage +20% · Maximum HP -20%"
+  },
+  "select": {
+    "title": "Choose your guardian",
+    "guide": "Complete challenges to unlock new guardians",
+    "selected": "SELECTED",
+    "available": "UNLOCKED",
+    "locked": "LOCKED",
+    "weapon": "Starting weapon · {name}",
+    "passive": "Passive · {value}",
+    "choose": "SELECT",
+    "begin": "{name} · BEGIN",
+    "back": "MAIN MENU",
+    "progress": "Progress · {current} / {target}",
+    "unlocked": "New guardian unlocked · {names}"
+  },
+  "unlock": {
+    "default": "Unlocked by default",
+    "souls": "Collect {target} souls in total",
+    "runKills": "Defeat {target} spirits in one run",
+    "survival": "Survive {target} in one run",
+    "weaponLevel": "Reach {weapon} level {target}",
+    "weaponKills": "Defeat {target} spirits with {weapon}"
+  }
+},
   audio: {enabled:"M · SOUND ON",muted:"M · MUTED"},
   meta: {
     title: "GUIYA | Night of Spirits",
@@ -14,9 +68,10 @@ export const en = {
     play: "BEGIN",
     moveGuide: "MOVE   WASD / ARROW KEYS",
     autoAttack: "AUTO ATTACK ENABLED   •   ESC TO PAUSE",
-    sector: "EXORCIST · BANISHING TALISMAN\nTEN MINUTES UNTIL DAWN",
+    sector: "{character} · {weapon}\nTEN MINUTES UNTIL DAWN",
   },
   hud: {
+    characterBuild:"{character}   /   {critical}% CRITICAL",
     weapons: "WEAPONS {count}/{max}",
     hp: "VITALITY",
     level: "LV {level}",

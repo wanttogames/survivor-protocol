@@ -1,3 +1,5 @@
+import { getCharacterManager } from "../characters/CharacterManager";
+import type { WeaponId } from "../data/weaponConfig";
 import { AUDIO_KEYS as K } from "../audio/audioKeys";
 import { AudioManager } from "../audio/AudioManager";
 import { addAudioControls } from "../audio/audioControls";
@@ -21,6 +23,8 @@ import { Hud } from "../ui/Hud";
 import { UpgradePanel } from "../ui/UpgradePanel";
 import { label } from "../ui/common";
 export class GameScene extends Phaser.Scene {
+    private saveTimer = 0;
+    private progress = getCharacterManager().unlocks;
     private audio!: AudioManager;
     player!: Player;
     enemies!: Pool<Enemy>;
@@ -54,6 +58,7 @@ export class GameScene extends Phaser.Scene {
         this.audio.stopSfx();
         this.audio.playBgm(K.NIGHT_STAGE);
         this.elapsed = 0;
+        this.saveTimer = 0;
         this.kills = 0;
         this.paused = false;
         this.ended = false;
@@ -68,7 +73,7 @@ export class GameScene extends Phaser.Scene {
             }
         addWorldProps(this, BALANCE.worldSize);
         this.visuals = new CombatVisuals(this);
-        this.player = new Player(this);
+        this.player = new Player(this, getCharacterManager().character);
         this.cameras.main
             .setBounds(0, 0, BALANCE.worldSize, BALANCE.worldSize)
             .startFollow(this.player, true, 0.12, 0.12);
@@ -86,7 +91,8 @@ export class GameScene extends Phaser.Scene {
         }, BALANCE.limits.projectiles);
         this.orbs = new Pool(() => new ExpOrb(this), BALANCE.limits.orbs);
         this.levels = new LevelSystem();
-        this.weapons = new WeaponSystem(this, this.player, this.enemies, this.bolts, () => this.audio.playSfx(K.TALISMAN_SHOT), (enemy, value, critical) => this.enemyDamaged(enemy, value, critical));
+        this.weapons = new WeaponSystem(this, this.player, this.enemies, this.bolts, () => this.audio.playSfx(K.TALISMAN_SHOT), (enemy, value, critical, source) => this.enemyDamaged(enemy, value, critical, source), this.player.character.startingWeaponId);
+        this.progress.weaponLevel(this.player.character.startingWeaponId, 1);
         this.upgrades = new UpgradeSystem(Math.random, this.weapons.loadout);
         this.weaponBar = new WeaponBar(this, this.weapons.loadout);
         this.panel = new UpgradePanel(this, this.upgrades);
@@ -114,7 +120,7 @@ export class GameScene extends Phaser.Scene {
             const enemy = e as Enemy;
             if (!enemy.active || this.player.invulnerable > 0 || this.ended)
                 return;
-            this.player.stats.hp = Math.max(0, this.player.stats.hp - enemy.damage);
+            this.player.stats.hp = Math.max(0, this.player.stats.hp - enemy.damage * this.player.stats.damageTakenMultiplier);
             this.player.invulnerable = BALANCE.contactInvulnerability;
             this.cameras.main.shake(90, 0.003);
             this.visuals.playerHit();
@@ -139,6 +145,7 @@ export class GameScene extends Phaser.Scene {
             this.game.events.off(Phaser.Core.Events.BLUR, blur);
             this.panel.close();
             this.weapons.destroy();
+            this.progress.flush();
             this.audio.stopBgm();
             if (!this.ended)
                 this.audio.stopSfx();
@@ -177,6 +184,12 @@ export class GameScene extends Phaser.Scene {
             return;
         const dt = Math.min(delta / 1000, 0.05);
         this.elapsed += dt;
+        this.saveTimer += dt;
+        if (this.saveTimer >= 1) {
+            this.saveTimer = 0;
+            this.progress.survival(this.elapsed);
+            this.progress.flush();
+        }
         const x = Number(this.keys.D.isDown || this.keys.RIGHT.isDown) -
             Number(this.keys.A.isDown || this.keys.LEFT.isDown);
         const y = Number(this.keys.S.isDown || this.keys.DOWN.isDown) -
@@ -209,17 +222,18 @@ export class GameScene extends Phaser.Scene {
         if (this.levels.pending > 0)
             this.showUpgrade();
     }
-    private enemyDamaged(enemy: Enemy, value: number, critical: boolean) {
+    private enemyDamaged(enemy: Enemy, value: number, critical: boolean, source: WeaponId) {
         this.audio.playSfx(K.ENEMY_HIT);
         this.damage(enemy.x, enemy.y, Math.round(value), critical);
         this.visuals.hit(enemy.x, enemy.y);
         if (enemy.hp <= 0)
-            this.kill(enemy);
+            this.kill(enemy, source);
     }
-    private kill(enemy: Enemy) {
+    private kill(enemy: Enemy, source: WeaponId) {
         const x = enemy.x, y = enemy.y, xp = enemy.xp;
         enemy.disableBody(true, true);
         this.kills++;
+        this.progress.kill(source, this.kills);
         this.audio.playSfx(K.ENEMY_DEATH);
         this.particles.emitParticleAt(x, y, 5);
         const orb = this.orbs.acquire();
@@ -250,6 +264,7 @@ export class GameScene extends Phaser.Scene {
                 orb.magnetized = true;
             if (dist < 20) {
                 this.levels.add(orb.value);
+                this.progress.collectSouls(orb.value);
                 this.audio.playSfx(K.SOUL_PICKUP);
                 orb.setActive(false).setVisible(false);
             }
@@ -298,6 +313,8 @@ export class GameScene extends Phaser.Scene {
             this.audio.playSfx(K.UPGRADE_SELECT);
             this.upgrades.apply(choice, this.player.stats);
             this.weapons.syncLoadout();
+            if (choice.definition.weaponId)
+                this.progress.weaponLevel(choice.definition.weaponId, this.weapons.loadout.level(choice.definition.weaponId));
             this.weaponBar.refresh();
             this.hud.update(this.player, this.levels, this.elapsed, this.kills);
             if (this.levels.pending > 0)
@@ -312,6 +329,7 @@ export class GameScene extends Phaser.Scene {
         if (this.ended)
             return;
         this.ended = true;
+        this.progress.finishRun(this.kills, Math.min(this.elapsed, BALANCE.duration));
         this.audio.endRun(!won);
         this.physics.pause();
         this.scene.start("GameOver", {
@@ -319,6 +337,7 @@ export class GameScene extends Phaser.Scene {
             level: this.levels.level,
             kills: this.kills,
             won,
+            unlocked: this.progress.takeNotifications(),
         });
     }
 }

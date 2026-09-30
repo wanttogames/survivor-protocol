@@ -1,9 +1,9 @@
 import { WEAPONS, WEAPON_RULES, type WeaponId } from '../data/weaponConfig';
 /** Run-owned progression; contains no Phaser objects and resets on Retry. */
 export class WeaponLoadout {
-    private levels = new Map<WeaponId, number>([['arc-bolt', 1]]);
+    private levels: Map<WeaponId, number>;
     revision = 0;
-    constructor(readonly slots: number = WEAPON_RULES.slots) { }
+    constructor(readonly slots: number = WEAPON_RULES.slots, startingWeapon: WeaponId = 'arc-bolt') { this.levels = new Map([[startingWeapon, 1]]); }
     get size() { return this.levels.size; }
     level(id: WeaponId) { return this.levels.get(id) ?? 0; }
     canUpgrade(id: WeaponId) { return this.level(id) < WEAPONS[id].maxLevel && (this.level(id) > 0 || this.size < this.slots); }

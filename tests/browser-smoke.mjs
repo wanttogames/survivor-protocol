@@ -54,6 +54,8 @@ try {
   });
   await page.screenshot({ path: "menu-preview.png" });
   await page.keyboard.press("Enter");
+  await page.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.isActive("CharacterSelect"));
+  await page.keyboard.press("Enter");
   await page.waitForFunction(() =>
     window.__SURVIVOR_GAME__.scene.isActive("Game"),
   );

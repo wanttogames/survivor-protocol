@@ -23,6 +23,8 @@ try {
     assert.equal(files.size, 9);
     assert.deepEqual(bad, []);
     await page.mouse.click(242, 560);
+    await page.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.isActive("CharacterSelect"));
+    await page.keyboard.press("Enter");
     await page.waitForFunction(() => window.audio.snapshot().bgmPlaying);
     assert.equal((await snap()).bgmLoop, true);
     assert.equal((await snap()).bgmObjects, 1);
@@ -95,6 +97,8 @@ try {
     await attach();
     assert.equal((await snap()).muted, true);
     await page.mouse.click(242, 560);
+    await page.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.isActive("CharacterSelect"));
+    await page.keyboard.press("Enter");
     await page.waitForFunction(() => window.__SURVIVOR_GAME__.scene.isActive('Game'));
     assert.equal((await snap()).muted, true);
     assert.deepEqual(errors, []);
@@ -105,6 +109,8 @@ try {
     missing.on('pageerror', e => missingErrors.push(e.message));
     await missing.goto('http://127.0.0.1:5174');
     await missing.waitForFunction(() => window.__SURVIVOR_GAME__?.scene.isActive('Menu'));
+    await missing.keyboard.press('Enter');
+    await missing.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.isActive('CharacterSelect'));
     await missing.keyboard.press('Enter');
     await missing.waitForFunction(() => window.__SURVIVOR_GAME__.scene.isActive('Game'));
     assert.deepEqual(missingErrors, []);

@@ -1,3 +1,5 @@
+import { getCharacterManager } from "../characters/CharacterManager";
+import { WEAPONS } from "../data/weaponConfig";
 import { AudioManager } from "../audio/AudioManager";
 import { addAudioControls } from "../audio/audioControls";
 import Phaser from "phaser";
@@ -23,13 +25,13 @@ export class MenuScene extends Phaser.Scene {
             .lineBetween(112, 365, 555, 365);
         label(this, 112, 394, () => t("menu.tagline"), 22, T.text.pale);
         label(this, 112, 441, () => t("menu.description"), 17, T.text.muted).setLineSpacing(8);
-        button(this, 242, 560, () => t("menu.play"), () => { AudioManager.forGame(this.game).unlock(); this.scene.start("Game"); });
+        button(this, 242, 560, () => t("menu.play"), () => { AudioManager.forGame(this.game).unlock(); this.scene.start("CharacterSelect"); });
         label(this, 112, 643, () => t("menu.moveGuide"), 13, T.text.muted);
         label(this, 112, 673, () => t("menu.autoAttack"), 12, T.text.muted);
-        label(this, 1190, 637, () => t("menu.sector"), 13, T.text.gold)
+        label(this, 1190, 637, () => t("menu.sector", { character: t(getCharacterManager().character.nameKey), weapon: t(WEAPONS[getCharacterManager().character.startingWeaponId].nameKey) }), 13, T.text.gold)
             .setOrigin(1, 0)
             .setAlign("right")
             .setLineSpacing(7);
-        this.input.keyboard?.once("keydown-ENTER", () => { AudioManager.forGame(this.game).unlock(); this.scene.start("Game"); });
+        this.input.keyboard?.once("keydown-ENTER", () => { AudioManager.forGame(this.game).unlock(); this.scene.start("CharacterSelect"); });
     }
 }

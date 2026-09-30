@@ -1,3 +1,5 @@
+import { characterById } from "../characters/characterDefinitions";
+import type { CharacterId } from "../characters/characterTypes";
 import { AudioManager } from "../audio/AudioManager";
 import { addAudioControls } from "../audio/audioControls";
 import { nightBackdrop, frame } from "../theme/ornaments";
@@ -9,6 +11,7 @@ export interface RunResult {
     level: number;
     kills: number;
     won: boolean;
+    unlocked?: CharacterId[];
 }
 export class GameOverScene extends Phaser.Scene {
     constructor() {
@@ -31,6 +34,8 @@ export class GameOverScene extends Phaser.Scene {
             label(this, x, 350, values[i], 44, "#b8a16a").setOrigin(0.5);
             label(this, x, 406, () => t(key), 12, "#a69e8c").setOrigin(0.5);
         });
+        if (result.unlocked?.length)
+            label(this, 640, 460, () => t("character.select.unlocked", { names: result.unlocked!.map(id => t(characterById(id).nameKey)).join(" · ") }), 14, "#cdb574").setOrigin(.5).setWordWrapWidth(850).setAlign("center");
         button(this, 640, 515, () => t("gameOver.retry"), () => { AudioManager.forGame(this.game).unlock(); this.scene.start("Game"); });
         button(this, 640, 593, () => t("gameOver.mainMenu"), () => this.scene.start("Menu"));
         this.input.keyboard?.once("keydown-ENTER", () => { AudioManager.forGame(this.game).unlock(); this.scene.start("Game"); });

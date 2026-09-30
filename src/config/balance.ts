@@ -9,6 +9,7 @@ export interface PlayerStats {
   pickupRadius: number;
   criticalChance: number;
   piercing: number;
+  damageTakenMultiplier:number;
 }
 export const BALANCE = {
   duration: 600,
@@ -24,6 +25,7 @@ export const BALANCE = {
     pickupRadius: 105,
     criticalChance: 0.05,
     piercing: 0,
+    damageTakenMultiplier:1,
   } satisfies PlayerStats,
   exp: { base: 8, growth: 1.24 },
   spawn: {

@@ -7,6 +7,7 @@ import type { Projectile } from '../entities/Projectile';
 import type { Pool } from '../utils/Pool';
 import { WeaponLoadout } from './WeaponLoadout';
 import { Weapon, type WeaponContext } from './Weapon';
+import { CombatSystem } from '../systems/CombatSystem';
 import { TalismanWeapon } from './TalismanWeapon';
 import { RosaryWeapon } from './RosaryWeapon';
 import { BellWeapon } from './BellWeapon';
@@ -15,20 +16,23 @@ import { GhostArrowWeapon } from './GhostArrowWeapon';
 import { HellfireWeapon } from './HellfireWeapon';
 /** One owner for weapons, targeting and damage feedback. Scene only forwards lifecycle/events. */
 export class WeaponSystem {
-    readonly loadout = new WeaponLoadout();
+    readonly loadout: WeaponLoadout;
+    private bolts: Pool<Projectile>;
+    private collision: CombatSystem;
     private weapons = new Map<WeaponId, Weapon>();
     private context: WeaponContext;
     private cached?: Enemy;
     private searched = false;
     private seenRevision = -1;
     readonly hits: Partial<Record<WeaponId, number>> = {};
-    private talisman: TalismanWeapon;
-    constructor(scene: Phaser.Scene, private player: Player, private enemies: Pool<Enemy>, bolts: Pool<Projectile>, onShot: () => void, private onDamage: (e: Enemy, value: number, crit: boolean) => void) {
+    constructor(scene: Phaser.Scene, private player: Player, private enemies: Pool<Enemy>, bolts: Pool<Projectile>, onShot: () => void, private onDamage: (e: Enemy, value: number, crit: boolean, source: WeaponId) => void, startingWeapon: WeaponId = 'arc-bolt') {
+        this.loadout = new WeaponLoadout(undefined, startingWeapon);
+        this.bolts = bolts;
+        this.collision = new CombatSystem(player, enemies, bolts);
         this.context = { scene, player, enemies, loadout: this.loadout, nearest: range => this.nearest(range), strike: (e, d, id) => this.strike(e, d, id) };
-        this.talisman = new TalismanWeapon(this.context, bolts, onShot);
-        this.weapons.set('arc-bolt', this.talisman);
         // Factories are invoked only when a new card is chosen, never every frame.
-        this.factories = { rosary: () => new RosaryWeapon(this.context), 'exorcism-bell': () => new BellWeapon(this.context), 'lightning-sword': () => new LightningSwordWeapon(this.context), 'ghost-arrow': () => new GhostArrowWeapon(this.context, bolts), hellfire: () => new HellfireWeapon(this.context) };
+        this.factories = { 'arc-bolt': () => new TalismanWeapon(this.context, bolts, onShot), rosary: () => new RosaryWeapon(this.context), 'exorcism-bell': () => new BellWeapon(this.context), 'lightning-sword': () => new LightningSwordWeapon(this.context), 'ghost-arrow': () => new GhostArrowWeapon(this.context, bolts), hellfire: () => new HellfireWeapon(this.context) };
+        this.syncLoadout();
     }
     private factories: Partial<Record<WeaponId, () => Weapon>>;
     private nearest(range: number) {
@@ -60,6 +64,12 @@ export class WeaponSystem {
         }
     }
     update(dt: number) {
+        for (const b of this.bolts.items)
+            if (b.active) {
+                b.ttl -= dt;
+                if (b.ttl <= 0)
+                    b.disableBody(true, true);
+            }
         this.searched = false;
         this.syncLoadout();
         for (const w of this.weapons.values())
@@ -74,13 +84,13 @@ export class WeaponSystem {
         e.setTintFill(0xffffff);
         e.flash = .07;
         this.hits[id] = (this.hits[id] ?? 0) + 1;
-        this.onDamage(e, value, crit);
+        this.onDamage(e, value, crit, id);
     }
     hit(b: Projectile, e: Enemy) {
-        if (!this.talisman.combat.hit(b, e))
+        if (!this.collision.hit(b, e))
             return false;
         this.hits[b.source] = (this.hits[b.source] ?? 0) + 1;
-        this.onDamage(e, b.damage, b.critical);
+        this.onDamage(e, b.damage, b.critical, b.source);
         return true;
     }
     destroy() {

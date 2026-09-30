@@ -76,10 +76,9 @@ export class Hud {
       .fillStyle(0x82b5b5)
       .fillRect(24, 80, (1232 * l.xp) / l.required, 3);
     this.build.setText(
-      t("hud.build", {
-        weapon: t(ARC_BOLT.nameKey),
-        count: p.stats.projectileCount+(this.loadout?.stats("arc-bolt").projectileCount??0),
-        critical: Math.round(p.stats.criticalChance * 100),
+      t("hud.characterBuild", {
+        character:t(p.character.nameKey),
+        critical:Math.round(p.stats.criticalChance*100),
       }),
     );
   }

@@ -15,6 +15,8 @@ try {
     await page.goto('http://127.0.0.1:5175');
     await page.waitForFunction(() => window.__SURVIVOR_GAME__?.scene.isActive('Menu'));
     await page.keyboard.press('Enter');
+    await page.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.isActive('CharacterSelect'));
+    await page.keyboard.press('Enter');
     await page.waitForFunction(() => window.__SURVIVOR_GAME__.scene.isActive('Game'));
     assert.deepEqual(await page.evaluate(() => Array.from(window.__SURVIVOR_GAME__.scene.getScene('Game').weapons.loadout.entries())), [['arc-bolt', 1]]);
     // Force only the RNG, not the acquisition path: real level-up -> roll -> card -> apply.

@@ -10,12 +10,6 @@ export class CombatSystem {
     constructor(private player: Player, private enemies: Pool<Enemy>, private bolts: Pool<Projectile>, private onShot: () => void = () => { }, private target?: (range: number) => Enemy | undefined, private weaponStats?: () => WeaponStats) { }
     update(dt: number) {
         this.cooldown -= dt;
-        for (const b of this.bolts.items)
-            if (b.active) {
-                b.ttl -= dt;
-                if (b.ttl <= 0)
-                    b.disableBody(true, true);
-            }
         if (this.cooldown > 0)
             return;
         const w = this.weaponStats?.();

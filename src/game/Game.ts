@@ -1,3 +1,4 @@
+import {CharacterSelectScene} from "../scenes/CharacterSelectScene";
 import Phaser from "phaser";
 import { VIEW } from "../config/gameConfig";
 import { BootScene } from "../scenes/BootScene";
@@ -14,6 +15,6 @@ export function createGame() {
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     physics: { default: "arcade", arcade: { debug: false } },
     render: { antialias: true, powerPreference: "high-performance" },
-    scene: [BootScene, MenuScene, GameScene, GameOverScene],
+    scene: [BootScene, MenuScene, CharacterSelectScene, GameScene, GameOverScene],
   });
 }
