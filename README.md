@@ -459,7 +459,7 @@ npm run test:browser
 - `mapTextures.ts`: Canvas 기반 기와집/사당/장승 4형태/고목/봉분/비석/담/울타리/장독/상자/제단/등불/부적/안개/봉인 문양 생성.
 - `spawnSafety.ts`: 월드 안 좌표와 민가/사당/큰 바위의 시각적 footprint를 확인하고 보정. 일반 적, 엘리트, 보스, 귀문/소환 적 경로에서 공유합니다.
 
-큰 랜드마크도 충돌 없는 배경입니다. 작은 장식이나 집 때문에 플레이어나 직선 추적 적이 막히지 않습니다. 스폰만 건축물/큰 바위 시각 영역에서 벗어나도록 보정하며 navigation/pathfinding은 추가하지 않습니다. 새 맵은 정의/renderer를 MapManager에 연결하는 방식으로 확장하며 GameScene을 복사하지 않습니다.
+9차 업데이트에서 큰 랜드마크의 실제 바닥 본체에 플레이어 전용 충돌을 추가했습니다. 작은 장식은 그대로 통과할 수 있고 직선 추적 적/보스/투사체는 건물 충돌을 무시합니다. 스폰은 건축물/큰 바위의 시각 영역과 충돌 구간에서 벗어나도록 보정하며 navigation/pathfinding은 추가하지 않습니다. 새 맵은 정의/renderer를 MapManager에 연결하는 방식으로 확장하며 GameScene을 복사하지 않습니다.
 
 지형과 정적 소품을 36개 청크로 함께 구워 표시합니다. 청크 하나의 실제 텍스처는 300 × 300이며 월드에서는 600 × 600으로 표시합니다. 정적 소품 수백 개를 개별 live sprite로 렌더링하거나 매 프레임 다시 그리지 않습니다. 기본 지형/소품 텍스처는 게임 내에서 재사용하며 run별 합성 청크는 shutdown에서 제거합니다. 화면 밖 청크는 0.25초 간격으로 숨깁니다. 배경 캐시의 RGBA 픽셀 예산은 기본/합성 지형 합계 약 25 MiB이며 소품 텍스처가 별도로 소량 추가됩니다.
 
@@ -485,3 +485,19 @@ npm run test:browser
 구역별 실제 화면은 `map-previews/`에 있습니다. Windows 프로젝트/GitHub/Cloudflare에는 직접 반영하지 않았습니다. 반영용 ZIP의 같은 상대경로 파일을 병합한 뒤 다시 빌드하세요.
 
 최종 실행 기록: 단위 테스트 35/35, map/bosses/evolution/browser Chromium 테스트 통과. 월하촌 생성, 6구역, 이동, 보스/소환 스폰 보정, 보상·승리·Retry, 390×844 canvas, 오류/404 없음 확인. 일반 적 364마리의 제어된 장면에서 맵 update p95 0.1ms. 같은 장면의 프레임 중앙값은 월하촌 92.9ms / 기존 grid+소품 배경 83.2ms였으며 p95는 115.0ms / 120.4ms였습니다. 소프트웨어 렌더링에서 배경 비용이 추가되므로 FPS가 동일하다고 보장하지 않습니다. GPU 실기기 및 실제 10분 연속 플레이는 별도 확인 대상입니다. 최종 TypeScript/build 성공, 기존 청크 크기 권고 경고만 남습니다.
+
+
+## 9차 월하촌 제한 충돌
+
+- `MapCollisionManager`가 보이지 않는 StaticGroup/Zone 33개와 플레이어 전용 Arcade collider 1개를 생성합니다. 충돌 면적 합계는 월드의 약 1.58%입니다.
+- `mapDefinitions.collisionZones`는 landmark 상대 위치로 정의하며, 돌담 그림과 충돌은 같은 `getMapWalls` 배치를 사용합니다. 건물 위치를 바꾸면 충돌도 함께 이동합니다.
+- 기와집 5채와 사당의 바닥 본체, 큰 바위 2개, 주요 돌담 12개(각 2구간), 사당 앞 큰 제단만 막습니다. 지붕, 문 앞 계단, 장승, 무덤, 봉인터 문양과 작은 소품은 통과합니다.
+- 플레이어 기존 반지름 15px 원형 body를 유지합니다. 적/보스/투사체에는 건물 collider를 연결하지 않습니다.
+- 공용 spawn validation에 충돌 구간을 추가했습니다. 적이 건물 안에서 죽어도 혼백은 기존 magnet으로 벽을 무시하고 흡수되며, 회복 부적은 접근 가능한 안전 위치로 보정합니다.
+- Shutdown 시 collider/그룹/Zone/debug를 정리합니다. Phaser가 이미 정리한 그룹도 안전하게 처리합니다. Retry 3회에서 static body 33개, 지형 청크 36개, 안개 8개, 맵 텍스처 95개가 동일했습니다.
+- 충돌 디버그는 개발 서버에서 `.env.local`에 `VITE_DEBUG_MAP_COLLISION=true`를 설정하고 재시작하면 표시됩니다. Production에서는 항상 꺼집니다.
+- 매 프레임 배경 재생성, 소품 physics, pathfinding을 추가하지 않습니다.
+
+검증: `npm test`(37개), `npm run test:collision`, `npm run test:bosses`, `npm run test:browser`, `npm run build`. 충돌 브라우저 테스트는 실제 Arcade step/키 입력, 정면 차단, 대각선 모서리 이동, 분할 돌담 경계 이동, 지붕/작은 장식 통과, 두 보스/적/투사체 통과, 혼백/회복 획득, 스폰 안전성, Retry 중복 방지를 확인합니다.
+
+테스트 환경은 Chromium/SwiftShader이며 Windows 실제 장치의 FPS 검증은 별도입니다. Windows 프로젝트나 Git에 직접 적용한 것이 아니라 기존 프로젝트 사본을 수정한 업데이트 파일입니다.

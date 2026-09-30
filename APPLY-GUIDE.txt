@@ -1,0 +1,26 @@
+월하촌 제한 충돌 업데이트 적용 안내
+
+전제: 이전 월하촌 맵 업데이트가 적용된 Phaser 3 / TypeScript / Vite 프로젝트.
+이 ZIP은 전체 프로젝트가 아니라 이번 변경 파일 11개입니다.
+Windows 경로를 직접 수정하지 않았습니다. 제공한 기존 프로젝트 사본에서 작업했습니다.
+
+1. 기존 C:\work\survivor-protocol을 백업하세요.
+2. ZIP의 src, tests, package.json, README.md를 동일한 프로젝트 경로에 병합하세요.
+   기존 src/tests 폴더를 삭제하지 마세요. FILES.txt에서 변경 파일을 확인할 수 있습니다.
+   로컬에서 같은 파일을 별도로 수정했다면 덮어쓰기 전에 차이를 확인하세요.
+3. 프로젝트에서 npm install, npm run build, npm test를 실행하세요.
+4. 기존 개발 서버를 종료하고 npm run dev로 다시 시작하세요. 출력된 Local 주소로 접속하고 Ctrl+Shift+R로 새로고침하세요.
+5. 기와집/사당/돌담/큰 바위 앞에 접근하고 장승/무덤/봉인터는 통과 가능한지 확인하세요.
+6. 개발용 충돌 표시: .env.local에 VITE_DEBUG_MAP_COLLISION=true를 추가하고 서버를 재시작하세요.
+   Production 빌드에서는 디버그 표시가 항상 꺼집니다. collision-previews는 개발 디버그 스크린샷입니다.
+7. 자동 브라우저 검증은 Playwright Chromium 설치 후 npm run test:collision / npm run test:bosses / npm run test:browser로 실행할 수 있습니다.
+   브라우저가 없으면 npx playwright install chromium이 필요합니다.
+8. 배포 시 로컬 build/preview를 먼저 확인한 뒤 변경 파일을 기존 저장소에 커밋/푸시하세요. 이 업데이트가 자동 배포되지는 않습니다.
+
+구현: 플레이어만 보이지 않는 static Zone 33개와 충돌. 건물 바닥 footprint / 돌담 분할 / 큰 바위 / 사당 큰 제단.
+플레이어 반지름 15px 유지. 적·보스·투사체·혼백은 장애물 collision 없음.
+공용 spawn 검증에 collisionZones 포함. 회복 보상은 안전 위치로 보정. Retry 정리 중복 방지.
+
+검증 결과: 단위 37/37, 충돌/보스/전체 플레이 Chromium 테스트 통과, npm run build 성공.
+Retry 3회: static body 33, 지형 36, 안개 8, 맵 텍스처 95개 동일.
+빌드는 기존 대형 JS 청크 권고 경고만 발생. Windows 실기기의 성능은 별도 확인이 필요합니다.

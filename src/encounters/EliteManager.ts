@@ -1,3 +1,4 @@
+import { safeMapSpawn } from '../maps/spawnSafety';
 import type Phaser from 'phaser';
 import type { Enemy } from '../entities/Enemy';
 import type { Player } from '../entities/Player';
@@ -40,7 +41,8 @@ export class EliteManager {
             return;
         f.life = C.healPickupLifetime;
         f.amount = d.reward.healFraction;
-        f.image.setPosition(e.x, e.y).setVisible(true);
+        const safe = safeMapSpawn(e.x, e.y, C.healPickupRadius);
+        f.image.setPosition(safe.x, safe.y).setVisible(true);
     }
     update(dt: number) {
         this.aura.clear();

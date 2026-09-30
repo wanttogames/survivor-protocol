@@ -8,6 +8,17 @@ export interface Landmark extends MapPoint {
   /** Visual footprint, used only for initial spawn placement, never physics. */
   footprint?: { width: number; height: number };
 }
+export interface CollisionZone {
+  id: string;
+  landmarkId: string;
+  offsetX: number;
+  offsetY: number;
+  width: number;
+  height: number;
+  scaleWithLandmark?: boolean;
+}
+export interface CollisionRect extends MapPoint { id: string; width: number; height: number }
+export interface MapWall extends MapPoint { id: string; landmarkId: string; offsetX: number; offsetY: number; scale: number }
 export interface MapDefinition {
   id: string;
   nameKey: TranslationKey;
@@ -19,6 +30,7 @@ export interface MapDefinition {
   zones: readonly { id: string; center: MapPoint; radius: number; color: string }[];
   roads: readonly (readonly MapPoint[])[];
   landmarks: readonly Landmark[];
+  collisionZones: readonly CollisionZone[];
   decorationConfig: { smallProps: number; fogLayers: number; wisps: number };
 }
 export const MOONLIT_VILLAGE: MapDefinition = {
@@ -51,5 +63,38 @@ export const MOONLIT_VILLAGE: MapDefinition = {
     {id:'western-boulder',kind:'rock',x:650,y:1000,scale:1.8,footprint:{width:115,height:85}},
     {id:'eastern-boulder',kind:'rock',x:3050,y:2400,scale:1.6,footprint:{width:100,height:75}},
   ],
+  collisionZones: [],
   decorationConfig: { smallProps: 210, fogLayers: 8, wisps: 12 },
 };
+
+/** The same landmark-relative wall layout drives both baked visuals and segmented blockers. */
+export function getMapWalls(map: MapDefinition): MapWall[] {
+  return map.landmarks.flatMap(l => {
+    const parts = l.kind === 'house'
+      ? [{offsetX:-145,offsetY:175,scale:.9},{offsetX:145,offsetY:175,scale:.8}]
+      : l.kind === 'shrine' ? [{offsetX:-295,offsetY:145,scale:1},{offsetX:300,offsetY:145,scale:1}] : [];
+    return parts.map((p,i)=>({...p,id:`${l.id}:wall-${i}`,landmarkId:l.id,x:l.x+p.offsetX,y:l.y+p.offsetY}));
+  });
+}
+export function getMapCollisionZones(map: MapDefinition): CollisionRect[] {
+  return map.collisionZones.map(z=>{
+    const l=map.landmarks.find(l=>l.id===z.landmarkId);
+    if(!l)throw new Error(`Missing collision landmark: ${z.landmarkId}`);
+    const scale=z.scaleWithLandmark?l.scale:1;
+    return {id:z.id,x:l.x+z.offsetX*scale,y:l.y+z.offsetY*scale,width:z.width*scale,height:z.height*scale};
+  });
+}
+// Bodies lie below the roofs; the front steps and open approach to each door remain walkable.
+MOONLIT_VILLAGE.collisionZones = [
+  ...MOONLIT_VILLAGE.landmarks.filter(l=>['house','shrine','rock'].includes(l.kind)).map(l=>({
+    id:`${l.id}:body`,landmarkId:l.id,offsetX:0,offsetY:l.kind==='house'?35:l.kind==='shrine'?30:12,
+    width:l.kind==='house'?260:l.kind==='shrine'?320:62,
+    height:l.kind==='rock'?36:90,scaleWithLandmark:true,
+  })),
+  ...getMapWalls(MOONLIT_VILLAGE).flatMap(w=>[-1,1].map(side=>({
+    id:`${w.id}:${side<0?'left':'right'}`,landmarkId:w.landmarkId,
+    offsetX:w.offsetX+side*41*w.scale,offsetY:w.offsetY+7*w.scale,
+    width:82*w.scale,height:22*w.scale,
+  }))),
+  {id:'shrine-altar',landmarkId:'abandoned-shrine',offsetX:0,offsetY:275+17*1.1,width:76*1.1,height:26*1.1},
+];

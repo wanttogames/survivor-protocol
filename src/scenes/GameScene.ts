@@ -89,6 +89,7 @@ export class GameScene extends Phaser.Scene {
         this.visuals = new CombatVisuals(this);
         this.player = new Player(this, getCharacterManager().character);
         this.player.setPosition(this.mapManager.definition.start.x, this.mapManager.definition.start.y);
+        this.mapManager.attachPlayer(this.player);
         this.cameras.main
             .setBounds(0, 0, this.mapManager.definition.width, this.mapManager.definition.height)
             .centerOn(this.player.x, this.player.y)

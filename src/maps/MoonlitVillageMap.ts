@@ -3,7 +3,7 @@ import { label } from '../ui/common';
 import { t } from '../i18n';
 import { createMapTextures } from './mapTextures';
 import { isMapSpawnSafe } from './spawnSafety';
-import type { MapDefinition, MapPoint } from './mapDefinitions';
+import { getMapWalls, type MapDefinition } from './mapDefinitions';
 export type MapMood = 'quiet' | 'general' | 'king' | 'sealed';
 type StaticObject = { key: string; x: number; y: number; margin: number; scale: number; alpha: number; rotation: number };
 type Floating = { image: Phaser.GameObjects.Image; x: number; y: number; phase: number };
@@ -45,7 +45,6 @@ export class MoonlitVillageMap {
     }
     // Architecture clusters remain fixed; paths and their entrances remain clear.
     for(const house of d.landmarks.filter(l=>l.kind==='house')){
-      add('mv-wall',house.x-145,house.y+175,.9);add('mv-wall',house.x+145,house.y+175,.8);
       add('mv-jar',house.x+205,house.y+110,1);add('mv-jar',house.x+241,house.y+125,.75);
       add('mv-crate',house.x-192,house.y+110);add('mv-fence',house.x-205,house.y-100,.8,.8,-.1);
     }
@@ -59,7 +58,9 @@ export class MoonlitVillageMap {
       const x=2490+col*137+(row%2)*43,y=810+row*151;
       if(Math.hypot(x-2750,y-930)>155)add('mv-grave',x,y,.85+(col%3)*.12,.92,(col%2?-.05:.03));
     }
-    add('mv-altar',1500,925,1.1);add('mv-wall',1205,795,1);add('mv-wall',1800,795,1);
+    const shrine=d.landmarks.find(l=>l.kind==='shrine')!;
+    add('mv-altar',shrine.x,shrine.y+275,1.1);
+    for(const wall of getMapWalls(d))add('mv-wall',wall.x,wall.y,wall.scale);
     for(let i=0;i<5;i++)add('mv-jangseung-'+i%4,1220+i*135,480,.8,.8);
     // Sparse, run-varying dressing. Local RNG cannot perturb combat randomness.
     const random=rng(Math.floor(Math.random()*0xffffffff)),keys=['mv-rock','mv-jar','mv-fence','mv-grave','mv-tree'];
