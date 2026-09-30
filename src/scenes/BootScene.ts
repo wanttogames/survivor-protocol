@@ -1,3 +1,4 @@
+import { createWeaponTextures } from "../theme/weaponTextures";
 import { preloadAudio } from "../audio/preloadAudio";
 import { AudioManager } from "../audio/AudioManager";
 import Phaser from "phaser";
@@ -16,6 +17,7 @@ export class BootScene extends Phaser.Scene {
             g.generateTexture(key, size, size);
         };
         createObjectTextures(this);
+        createWeaponTextures(this);
         texture("grid", () => {
             g.fillStyle(0x151c21).fillRect(0, 0, 96, 96);
             g.lineStyle(1, 0x1d2529)

@@ -1,5 +1,6 @@
 import { frame } from "../theme/ornaments";
 import { t } from "../i18n";
+import type { WeaponLoadout } from "../weapons/WeaponLoadout";
 import { ARC_BOLT } from "../data/weapons";
 import Phaser from "phaser";
 import { label, timeLabel } from "./common";
@@ -13,7 +14,7 @@ export class Hud {
   private kills;
   private wave;
   private build;
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene,private loadout?:WeaponLoadout) {
     scene.add
       .rectangle(640, 43, 1232, 70, 0x111719, 0.94)
       .setStrokeStyle(1, 0x645540)
@@ -77,7 +78,7 @@ export class Hud {
     this.build.setText(
       t("hud.build", {
         weapon: t(ARC_BOLT.nameKey),
-        count: p.stats.projectileCount,
+        count: p.stats.projectileCount+(this.loadout?.stats("arc-bolt").projectileCount??0),
         critical: Math.round(p.stats.criticalChance * 100),
       }),
     );

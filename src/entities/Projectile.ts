@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import { type Enemy } from "./Enemy";
+import type { WeaponId } from "../data/weaponConfig";
 export class Projectile extends Phaser.Physics.Arcade.Sprite {
+  source: WeaponId = "arc-bolt";
   ttl = 0;
   damage = 0;
   pierce = 0;
@@ -23,6 +25,8 @@ export class Projectile extends Phaser.Physics.Arcade.Sprite {
     critical: boolean,
     ttl: number,
   ) {
+    this.setTexture("bolt").setCircle(5,7,7);
+    this.source="arc-bolt";
     this.enableBody(true, x, y, true, true);
     this.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
     this.rotation = angle;

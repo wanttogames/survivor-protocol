@@ -17,6 +17,7 @@ export const en = {
     sector: "EXORCIST · BANISHING TALISMAN\nTEN MINUTES UNTIL DAWN",
   },
   hud: {
+    weapons: "WEAPONS {count}/{max}",
     hp: "VITALITY",
     level: "LV {level}",
     exp: "SOULS",
@@ -30,6 +31,8 @@ export const en = {
   },
   pause: { message: "RESTING\n\nESC TO RESUME" },
   upgrade: {
+    newWeapon: "NEW WEAPON",
+    weaponUpgrade: "WEAPON UPGRADE",
     eyebrow: "ENLIGHTENMENT",
     title: "Awaken an ancient art",
     guide: "CHOOSE A SECRET ART TO CONTINUE",
@@ -49,7 +52,65 @@ export const en = {
     mainMenu: "MAIN MENU",
   },
   rarity: { Common: "Common", Rare: "Rare", Epic: "Epic" },
-  weapon: { pulseNeedle: { name: "Banishing Talisman" } },
+  weapon: {
+  "pulseNeedle": {
+    "name": "Banishing Talisman"
+  },
+  "talisman": {
+    "name": "Banishing Talisman",
+    "description": "Automatically aims talismans at the nearest spirit.",
+    "level1": "Cast a talisman at the nearest spirit.",
+    "level2": "Base talisman power +{damagePercent}%",
+    "level3": "Extra talismans per cast: {count}",
+    "level4": "Cast interval reduced by {cooldownPercent}%",
+    "level5": "Base power +{damagePercent}%\nExtra pierce: {pierce}"
+  },
+  "rosary": {
+    "name": "Rosary",
+    "description": "Orbiting beads strike spirits that approach.",
+    "level1": "Summon {count} orbiting beads.",
+    "level2": "Base bead damage: {damage}",
+    "level3": "Orbiting beads: {count}",
+    "level4": "Orbit radius: {range}\nFaster rotation",
+    "level5": "{count} beads · Base damage: {damage}"
+  },
+  "bell": {
+    "name": "Exorcism Bell",
+    "description": "Release a periodic spirit wave around you.",
+    "level1": "A spirit wave every {cooldown}s",
+    "level2": "Base wave damage: {damage}",
+    "level3": "Wave radius: {radius}",
+    "level4": "Cast interval: {cooldown}s",
+    "level5": "Base damage: {damage}\nRadius: {radius}"
+  },
+  "lightningSword": {
+    "name": "Thunderblade",
+    "description": "Sweep a powerful close-range arc toward a spirit.",
+    "level1": "A wide slash toward a nearby spirit.",
+    "level2": "Base slash damage: {damage}",
+    "level3": "Slash reach: {range}",
+    "level4": "Cast interval: {cooldown}s",
+    "level5": "{count} crossing slashes\nBase damage: {damage}"
+  },
+  "ghostArrow": {
+    "name": "Spirit Arrow",
+    "description": "Fast straight arrows pierce lines of spirits.",
+    "level1": "Fast straight arrow\nExtra targets pierced: {pierce}",
+    "level2": "Base arrow damage: {damage}",
+    "level3": "Extra targets pierced: {pierce}",
+    "level4": "Arrows per volley: {count}",
+    "level5": "Base damage: {damage}\nExtra targets pierced: {pierce}"
+  },
+  "hellfire": {
+    "name": "Hellfire Seal",
+    "description": "Place a seal near a spirit that deals periodic damage.",
+    "level1": "A seal near a spirit lasts {duration}s",
+    "level2": "Base damage per tick: {damage}",
+    "level3": "Seal radius: {radius}",
+    "level4": "Seal duration: {duration}s",
+    "level5": "Create {count} seals per cast"
+  }
+},
   enemy: {
     grunt: { name: "Wandering Soul" },
     runner: { name: "Night Fiend" },
@@ -58,10 +119,10 @@ export const en = {
   player: { name: "Exorcist" },
   pickup: { name: "Soul Fragment" },
   cards: {
-    power: { name: "Banishment", description: "Talisman power +{value}%" },
+    power: { name: "Banishment", description: "All weapon power +{value}%" },
     rapid: {
       name: "Swift Inscription",
-      description: "Casting speed +{value}%",
+      description: "Cast speed +{value}%\nExcept bead contact",
     },
     boots: { name: "Earth Step", description: "Movement speed +{value}%" },
     vitality: {
@@ -71,11 +132,11 @@ export const en = {
     recovery: { name: "Restore Vitality", description: "Restore {value} HP" },
     multi: {
       name: "Twin Talismans",
-      description: "Additional talismans +{value}",
+      description: "Extra talismans / arrows +{value}",
     },
     velocity: {
       name: "Flying Charm",
-      description: "Talisman flight speed +{value}%",
+      description: "Talisman / arrow speed +{value}%",
     },
     magnet: {
       name: "Soul Guidance",

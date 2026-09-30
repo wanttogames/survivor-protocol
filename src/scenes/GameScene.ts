@@ -13,7 +13,8 @@ import { Projectile } from "../entities/Projectile";
 import { ExpOrb } from "../entities/ExpOrb";
 import { Pool } from "../utils/Pool";
 import { EnemySpawnSystem } from "../systems/EnemySpawnSystem";
-import { CombatSystem } from "../systems/CombatSystem";
+import { WeaponSystem } from "../weapons/WeaponSystem";
+import { WeaponBar } from "../ui/WeaponBar";
 import { LevelSystem } from "../systems/LevelSystem";
 import { UpgradeSystem } from "../systems/UpgradeSystem";
 import { Hud } from "../ui/Hud";
@@ -33,7 +34,8 @@ export class GameScene extends Phaser.Scene {
     paused = false;
     ended = false;
     private spawn!: EnemySpawnSystem;
-    private combat!: CombatSystem;
+    weapons!: WeaponSystem;
+    private weaponBar!: WeaponBar;
     private hud!: Hud;
     private keys!: Record<string, Phaser.Input.Keyboard.Key>;
     private pauseText!: Phaser.GameObjects.Text;
@@ -84,11 +86,12 @@ export class GameScene extends Phaser.Scene {
         }, BALANCE.limits.projectiles);
         this.orbs = new Pool(() => new ExpOrb(this), BALANCE.limits.orbs);
         this.levels = new LevelSystem();
-        this.upgrades = new UpgradeSystem();
+        this.weapons = new WeaponSystem(this, this.player, this.enemies, this.bolts, () => this.audio.playSfx(K.TALISMAN_SHOT), (enemy, value, critical) => this.enemyDamaged(enemy, value, critical));
+        this.upgrades = new UpgradeSystem(Math.random, this.weapons.loadout);
+        this.weaponBar = new WeaponBar(this, this.weapons.loadout);
         this.panel = new UpgradePanel(this, this.upgrades);
-        this.hud = new Hud(this);
+        this.hud = new Hud(this, this.weapons.loadout);
         this.spawn = new EnemySpawnSystem(this.enemies);
-        this.combat = new CombatSystem(this.player, this.enemies, this.bolts, () => this.audio.playSfx(K.TALISMAN_SHOT));
         this.particles = this.add
             .particles(0, 0, "ash", {
             emitting: false,
@@ -103,13 +106,9 @@ export class GameScene extends Phaser.Scene {
         this.physics.add.overlap(boltGroup, enemyGroup, (a, b) => {
             const bolt = a as Projectile;
             const enemy = b as Enemy;
-            if (!this.combat.hit(bolt, enemy))
+            if (this.ended || this.paused || this.panel.open)
                 return;
-            this.audio.playSfx(K.ENEMY_HIT);
-            this.damage(enemy.x, enemy.y, Math.round(bolt.damage), bolt.critical);
-            this.visuals.hit(enemy.x, enemy.y);
-            if (enemy.hp <= 0)
-                this.kill(enemy);
+            this.weapons.hit(bolt, enemy);
         });
         this.physics.add.overlap(this.player, enemyGroup, (_p, e) => {
             const enemy = e as Enemy;
@@ -139,6 +138,7 @@ export class GameScene extends Phaser.Scene {
         this.events.once("shutdown", () => {
             this.game.events.off(Phaser.Core.Events.BLUR, blur);
             this.panel.close();
+            this.weapons.destroy();
             this.audio.stopBgm();
             if (!this.ended)
                 this.audio.stopSfx();
@@ -191,7 +191,7 @@ export class GameScene extends Phaser.Scene {
                 else
                     e.chase(this.player.x, this.player.y, dt);
             }
-        this.combat.update(dt);
+        this.weapons.update(dt);
         this.updateOrbs(dt);
         for (const d of this.damageTexts)
             if (d.ttl > 0) {
@@ -208,6 +208,13 @@ export class GameScene extends Phaser.Scene {
         }
         if (this.levels.pending > 0)
             this.showUpgrade();
+    }
+    private enemyDamaged(enemy: Enemy, value: number, critical: boolean) {
+        this.audio.playSfx(K.ENEMY_HIT);
+        this.damage(enemy.x, enemy.y, Math.round(value), critical);
+        this.visuals.hit(enemy.x, enemy.y);
+        if (enemy.hp <= 0)
+            this.kill(enemy);
     }
     private kill(enemy: Enemy) {
         const x = enemy.x, y = enemy.y, xp = enemy.xp;
@@ -290,6 +297,8 @@ export class GameScene extends Phaser.Scene {
         this.panel.show(this.upgrades.roll(), (choice) => {
             this.audio.playSfx(K.UPGRADE_SELECT);
             this.upgrades.apply(choice, this.player.stats);
+            this.weapons.syncLoadout();
+            this.weaponBar.refresh();
             this.hud.update(this.player, this.levels, this.elapsed, this.kills);
             if (this.levels.pending > 0)
                 this.showUpgrade();

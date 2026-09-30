@@ -1,3 +1,4 @@
+import { WEAPONS, weaponDescriptionParams } from "../data/weaponConfig";
 import { frame, talisman } from "../theme/ornaments";
 import { THEME as T } from "../theme/palette";
 import { t } from "../i18n";
@@ -76,7 +77,10 @@ export class UpgradePanel {
         .lineStyle(1, T.wood, 0.25)
         .lineBetween(x, 407, x + 235, 407)
         .lineBetween(x, 531, x + 235, 531);
-      talisman(ornament, x + 5, 330, 35, 59);
+      if(c.definition.weaponId){
+        const textures={"arc-bolt":"bolt",rosary:"rosary-bead","exorcism-bell":"bell-wave","lightning-sword":"sword-slash","ghost-arrow":"ghost-arrow",hellfire:"hellfire-seal"};
+        add(this.scene.add.image(x+30,360,textures[c.definition.weaponId]).setDisplaySize(52,52).setScrollFactor(0).setDepth(202));
+      }else talisman(ornament, x + 5, 330, 35, 59);
       ornament.fillStyle(T.vermilion, 0.9).fillRect(x + 202, 335, 33, 33);
       ornament
         .lineStyle(1, T.paper, 0.75)
@@ -94,7 +98,7 @@ export class UpgradePanel {
           288,
           () =>
             t("upgrade.rarity", {
-              rarity: t(`rarity.${c.rarity}`),
+              rarity: c.definition.weaponId ? t(this.upgrades.currentLevel(c.definition)===0?"upgrade.newWeapon":"upgrade.weaponUpgrade") : t(`rarity.${c.rarity}`),
               number: `0${i + 1}`,
             }),
           12,
@@ -124,8 +128,8 @@ export class UpgradePanel {
           545,
           () =>
             t("upgrade.level", {
-              current: this.upgrades.levels[c.definition.id] ?? 0,
-              next: (this.upgrades.levels[c.definition.id] ?? 0) + 1,
+              current: this.upgrades.currentLevel(c.definition),
+              next: this.upgrades.currentLevel(c.definition) + 1,
             }),
           13,
           hex,
@@ -139,6 +143,7 @@ export class UpgradePanel {
     );
   }
   private description(c: UpgradeChoice) {
+    if(c.definition.weaponId){const def=WEAPONS[c.definition.weaponId];return t(def.stepKeys[Math.min(this.upgrades.currentLevel(c.definition),def.maxLevel-1)],weaponDescriptionParams(c.definition.weaponId,this.upgrades.currentLevel(c.definition)+1));}
     return t(
       c.definition.descriptionKey,
       c.definition.descriptionParams(BALANCE.rarityMultiplier[c.rarity]),

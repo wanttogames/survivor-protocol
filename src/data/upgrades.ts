@@ -1,8 +1,10 @@
+import type { WeaponId } from "./weaponConfig";
 import type { TranslationKey, TranslationParams } from "../i18n";
 import { BALANCE, type PlayerStats } from "../config/balance";
 export type Rarity = "Common" | "Rare" | "Epic";
 export interface UpgradeDefinition {
   id: string;
+  weaponId?: WeaponId;
   nameKey: TranslationKey;
   descriptionKey: TranslationKey;
   descriptionParams: (multiplier: number) => TranslationParams;

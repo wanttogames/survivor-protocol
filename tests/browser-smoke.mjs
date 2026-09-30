@@ -144,9 +144,9 @@ try {
   );
   assert.equal(
     await page.evaluate(() =>
-      Object.values(
+      Object.entries(
         window.__SURVIVOR_GAME__.scene.getScene("Game").upgrades.levels,
-      ).reduce((a, b) => a + b, 0),
+      ).reduce((a, [id,level]) => a + level - (id === "weapon:arc-bolt" ? 1 : 0), 0),
     ),
     1,
   );

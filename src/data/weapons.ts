@@ -1,6 +1,8 @@
+import {WEAPONS,WEAPON_RULES} from './weaponConfig';
+// Compatibility for the original HUD/combat API; numbers live in weaponConfig.
 export const ARC_BOLT = {
-  nameKey: "weapon.pulseNeedle.name" as const,
-  range: 780,
-  lifetime: 1.8,
-  spread: 0.13,
+  nameKey: WEAPONS['arc-bolt'].nameKey,
+  range: WEAPONS['arc-bolt'].levels[0].range,
+  lifetime: WEAPONS['arc-bolt'].levels[0].duration,
+  spread: WEAPON_RULES.talismanSpread,
 };
