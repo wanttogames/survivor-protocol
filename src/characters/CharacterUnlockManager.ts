@@ -1,3 +1,4 @@
+import { baseWeaponId } from '../data/weaponConfig';
 import { CHARACTERS } from './characterDefinitions';
 import type { CharacterDefinition, CharacterId } from './characterTypes';
 import { WEAPON_IDS, type WeaponId } from '../data/weaponConfig';
@@ -66,7 +67,7 @@ export class CharacterUnlockManager {
     private changed() { this.dirty = true; const before = this.progress.unlockedCharacters.length; this.check(); if (this.progress.unlockedCharacters.length > before)
         this.flush(); }
     collectSouls(amount: number) { this.progress.totalSoulCollected = Math.min(Number.MAX_SAFE_INTEGER, this.progress.totalSoulCollected + number(amount)); this.changed(); }
-    kill(source: WeaponId, runKills: number) { this.progress.weaponKillCounts[source] = (this.progress.weaponKillCounts[source] ?? 0) + 1; this.progress.maxKillsInRun = Math.max(this.progress.maxKillsInRun, Math.floor(number(runKills))); this.changed(); }
+    kill(source: WeaponId, runKills: number) { source=baseWeaponId(source); this.progress.weaponKillCounts[source] = (this.progress.weaponKillCounts[source] ?? 0) + 1; this.progress.maxKillsInRun = Math.max(this.progress.maxKillsInRun, Math.floor(number(runKills))); this.changed(); }
     weaponLevel(id: WeaponId, level: number) { this.progress.weaponMaxLevels[id] = Math.max(this.progress.weaponMaxLevels[id] ?? 0, Math.min(5, Math.floor(number(level)))); this.changed(); }
     survival(seconds: number) { if (seconds > this.progress.maxSurvivalTime) {
         this.progress.maxSurvivalTime = number(seconds);

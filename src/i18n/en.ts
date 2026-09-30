@@ -1,4 +1,34 @@
 export const en = {
+  evolution: {
+    "thunder-talisman": {
+      "name": "Thunder Talisman",
+      "description": "Charged talismans chain lightning through nearby spirits."
+    },
+    "vajra-rosary": {
+      "name": "Vajra Rosary",
+      "description": "Six golden beads guard a wider orbit."
+    },
+    "soul-bell": {
+      "name": "Soul Bell",
+      "description": "A wider shockwave is followed by a second echo."
+    },
+    "thunder-god-sword": {
+      "name": "Thunder God Sword",
+      "description": "Great slashes trigger lightning explosions."
+    },
+    "demon-slayer-bow": {
+      "name": "Demon Slayer Bow",
+      "description": "Four swift arrows pierce long enemy formations."
+    },
+    "infernal-hellfire": {
+      "name": "Infernal Hellfire",
+      "description": "Three large, lasting seals burn spirits with stronger fire."
+    },
+    "badge": "EVOLUTION",
+    "max": "MAX",
+    "requirements": "{weapon} Lv{level} + {upgrade}",
+    "announcement": "{name} · EVOLVED"
+  },
   character:{
   "exorcist": {
     "name": "Exorcist",

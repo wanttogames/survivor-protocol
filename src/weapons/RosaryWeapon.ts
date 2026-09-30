@@ -2,6 +2,7 @@ import type Phaser from 'phaser';
 import type { Enemy } from '../entities/Enemy';
 import { ENEMIES } from '../data/enemies';
 import { WEAPON_RULES } from '../data/weaponConfig';
+import type { WeaponId } from '../data/weaponConfig';
 import { Weapon, type WeaponContext } from './Weapon';
 import { inCircle } from './geometry';
 export class RosaryWeapon extends Weapon {
@@ -14,11 +15,11 @@ export class RosaryWeapon extends Weapon {
         generation: number;
         next: number;
     }>();
-    constructor(ctx: WeaponContext) { super('rosary', ctx); }
+    constructor(ctx: WeaponContext, id: WeaponId = 'rosary') { super(id, ctx); }
     update(dt: number) {
         const s = this.stats, p = this.ctx.player;
         while (this.beads.length < s.projectileCount)
-            this.beads.push(this.ctx.scene.add.image(p.x, p.y, 'rosary-bead').setDepth(4));
+            this.beads.push(this.ctx.scene.add.image(p.x, p.y, 'rosary-bead').setDepth(4).setScale(this.id === 'vajra-rosary' ? 1.35 : 1).setTint(this.id === 'vajra-rosary' ? 0xffe5a0 : 0xffffff));
         this.angle += dt * s.speed;
         this.clock += dt;
         this.scan -= dt;

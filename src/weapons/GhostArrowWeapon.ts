@@ -1,10 +1,11 @@
+import type { WeaponId } from "../data/weaponConfig";
 import { Weapon, type WeaponContext } from './Weapon';
 import { BALANCE } from '../config/balance';
 import { WEAPON_RULES } from '../data/weaponConfig';
 import type { Projectile } from '../entities/Projectile';
 import type { Pool } from '../utils/Pool';
 export class GhostArrowWeapon extends Weapon {
-    constructor(ctx: WeaponContext, private bolts: Pool<Projectile>) { super('ghost-arrow', ctx); }
+    constructor(ctx: WeaponContext, private bolts: Pool<Projectile>, id: WeaponId = 'ghost-arrow') { super(id, ctx); }
     update(dt: number) {
         if (!this.due(dt))
             return;
@@ -22,7 +23,7 @@ export class GhostArrowWeapon extends Weapon {
             const crit = Math.random() < p.stats.criticalChance;
             bolt.fire(p.x, p.y, angle + (i - (count - 1) / 2) * WEAPON_RULES.arrowSpread, s.speed * p.stats.projectileSpeed / BALANCE.player.projectileSpeed, s.damage * p.stats.damage / BALANCE.player.damage * (crit ? BALANCE.criticalMultiplier : 1), s.pierce + p.stats.piercing, crit, s.duration);
             bolt.source = this.id;
-            bolt.setTexture('ghost-arrow').setCircle(s.radius, 24 - s.radius, 24 - s.radius);
+            bolt.setScale(1).setTexture('ghost-arrow').setTint(this.id === 'demon-slayer-bow' ? 0xffd99a : 0xffffff).setCircle(s.radius, 24 - s.radius, 24 - s.radius);
         }
     }
     destroy() { }

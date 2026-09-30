@@ -1,4 +1,6 @@
-import { WEAPONS, weaponDescriptionParams } from "../data/weaponConfig";
+import { WEAPON_EVOLUTIONS } from '../weapons/evolution/weaponEvolutionDefinitions';
+import { UPGRADES } from '../data/upgrades';
+import { WEAPONS, baseWeaponId, weaponDescriptionParams } from "../data/weaponConfig";
 import { frame, talisman } from "../theme/ornaments";
 import { THEME as T } from "../theme/palette";
 import { t } from "../i18n";
@@ -46,7 +48,8 @@ export class UpgradePanel {
     );
     choices.forEach((c, i) => {
       const x = 190 + i * 330;
-      const color =
+      const evolution=WEAPON_EVOLUTIONS.find(e=>e.id===c.definition.evolutionId);
+      const color = evolution ? 0xb18436 :
         c.rarity === "Epic"
           ? 0x884035
           : c.rarity === "Rare"
@@ -54,8 +57,8 @@ export class UpgradePanel {
             : 0x675538;
       const hex = "#" + color.toString(16);
       const box = this.scene.add
-        .rectangle(x + 120, 432, 300, 340, T.paper)
-        .setStrokeStyle(1, color, 0.6)
+        .rectangle(x + 120, 432, 300, 340, evolution?T.paperLight:T.paper)
+        .setStrokeStyle(evolution?3:1, color, evolution?1:0.6)
         .setScrollFactor(0)
         .setDepth(201)
         .setInteractive({ useHandCursor: true });
@@ -77,9 +80,9 @@ export class UpgradePanel {
         .lineStyle(1, T.wood, 0.25)
         .lineBetween(x, 407, x + 235, 407)
         .lineBetween(x, 531, x + 235, 531);
-      if(c.definition.weaponId){
+      if(c.definition.weaponId||evolution){
         const textures={"arc-bolt":"bolt",rosary:"rosary-bead","exorcism-bell":"bell-wave","lightning-sword":"sword-slash","ghost-arrow":"ghost-arrow",hellfire:"hellfire-seal"};
-        add(this.scene.add.image(x+30,360,textures[c.definition.weaponId]).setDisplaySize(52,52).setScrollFactor(0).setDepth(202));
+        add(this.scene.add.image(x+30,360,textures[baseWeaponId(c.definition.weaponId??evolution!.baseWeaponId)]).setDisplaySize(52,52).setScrollFactor(0).setDepth(202));
       }else talisman(ornament, x + 5, 330, 35, 59);
       ornament.fillStyle(T.vermilion, 0.9).fillRect(x + 202, 335, 33, 33);
       ornament
@@ -89,7 +92,7 @@ export class UpgradePanel {
         .lineBetween(x + 225, 345, x + 212, 358);
       add(ornament);
       box.on("pointerover", () => box.setFillStyle(T.paperLight));
-      box.on("pointerout", () => box.setFillStyle(T.paper));
+      box.on("pointerout", () => box.setFillStyle(evolution?T.paperLight:T.paper));
       box.on("pointerdown", () => this.select(i));
       add(
         label(
@@ -98,7 +101,7 @@ export class UpgradePanel {
           288,
           () =>
             t("upgrade.rarity", {
-              rarity: c.definition.weaponId ? t(this.upgrades.currentLevel(c.definition)===0?"upgrade.newWeapon":"upgrade.weaponUpgrade") : t(`rarity.${c.rarity}`),
+              rarity: evolution?t("evolution.badge"):c.definition.weaponId ? t(this.upgrades.currentLevel(c.definition)===0?"upgrade.newWeapon":"upgrade.weaponUpgrade") : t(`rarity.${c.rarity}`),
               number: `0${i + 1}`,
             }),
           12,
@@ -112,9 +115,9 @@ export class UpgradePanel {
           x,
           418,
           () => t(c.definition.nameKey),
-          22,
+          evolution?19:22,
           T.text.ink,
-        ).setDepth(202),
+        ).setWordWrapWidth(250).setDepth(202),
       );
       add(
         label(this.scene, x, 466, () => this.description(c), 16, "#504532")
@@ -127,13 +130,13 @@ export class UpgradePanel {
           x,
           545,
           () =>
-            t("upgrade.level", {
+            evolution?t("evolution.requirements",{weapon:t(WEAPONS[evolution.baseWeaponId].nameKey),level:evolution.requiredWeaponLevel,upgrade:t(UPGRADES.find(u=>u.id===evolution.requiredUpgradeIds[0])!.nameKey)}):t("upgrade.level", {
               current: this.upgrades.currentLevel(c.definition),
               next: this.upgrades.currentLevel(c.definition) + 1,
             }),
-          13,
+          evolution?12:13,
           hex,
-        ).setDepth(202),
+        ).setWordWrapWidth(250).setDepth(202),
       );
     });
     add(

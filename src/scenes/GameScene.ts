@@ -313,6 +313,15 @@ export class GameScene extends Phaser.Scene {
             this.audio.playSfx(K.UPGRADE_SELECT);
             this.upgrades.apply(choice, this.player.stats);
             this.weapons.syncLoadout();
+            if(choice.definition.evolutionId){
+                this.audio.playSfx(K.LEVEL_UP);
+                this.visuals.awaken(this.player.x,this.player.y);
+                this.cameras.main.flash(180,204,167,88,false);
+                this.cameras.main.shake(90,.002);
+                const title=label(this,640,260,()=>t('evolution.announcement',{name:t(choice.definition.nameKey)}),26,'#efd49b').setOrigin(.5).setScrollFactor(0).setDepth(205);
+                this.tweens.add({targets:title,alpha:0,delay:700,duration:600,onComplete:()=>title.destroy()});
+            }
+
             if (choice.definition.weaponId)
                 this.progress.weaponLevel(choice.definition.weaponId, this.weapons.loadout.level(choice.definition.weaponId));
             this.weaponBar.refresh();

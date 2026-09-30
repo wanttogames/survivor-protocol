@@ -7,8 +7,8 @@ import { label } from './common';
 export class WeaponBar {
     private text: Phaser.GameObjects.Text;
     constructor(scene: Phaser.Scene, private loadout: WeaponLoadout) {
-        this.text = label(scene, 35, 718, () => this.content(), 13, '#cbbb92').setDepth(100).setBackgroundColor('#111719').setPadding(7, 4);
+        this.text = label(scene, 35, 704, () => this.content(), 11, '#cbbb92').setWordWrapWidth(1020).setDepth(100).setBackgroundColor('#111719').setPadding(7, 4);
     }
-    private content() { return t('hud.weapons', { count: this.loadout.size, max: this.loadout.slots }) + '   ' + Array.from(this.loadout.entries(), ([id, level]) => `${t(WEAPONS[id].nameKey)} ${level}`).join('  ·  '); }
+    private content() { return t('hud.weapons', { count: this.loadout.size, max: this.loadout.slots }) + '   ' + Array.from(this.loadout.entries(), ([id, level]) => `${t(WEAPONS[id].nameKey)} ${WEAPONS[id].baseWeaponId?t("evolution.max"):level}`).join('  ·  '); }
     refresh() { this.text.setText(this.content()); }
 }

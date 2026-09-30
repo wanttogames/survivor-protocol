@@ -12,6 +12,7 @@ export interface WeaponContext {
     loadout: WeaponLoadout;
     nearest(range: number): Enemy | undefined;
     strike(enemy: Enemy, damage: number, source: WeaponId): void;
+    burst(x:number,y:number,damage:number,source:WeaponId):void;
 }
 export abstract class Weapon {
     protected timer = 0;

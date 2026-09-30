@@ -253,7 +253,7 @@ Vite의 큰 Phaser 번들 권고 경고는 남아 있습니다.
 - 화살은 기존 상한 200 투사체 풀/단일 overlap/TTL 사용. 모든 신규 이펙트는 재사용 이미지이며 별도 적별 Collider나 Tween을 생성하지 않습니다.
 - 신규 SFX/BGM 파일을 참조하지 않습니다. 부적 발사음과 공통 피격·사망음은 기존 AudioManager 제한 적용.
 - 기존 balance.ts, 적 수치, 이동, 스폰, 경험치, AudioManager 설정은 3차와 동일합니다.
-- 진화 조건/변환 로직은 구현하지 않았습니다. 향후 WeaponId, Loadout, 데이터 정의, 구현체 factory에 진화 규칙과 전환 수명주기를 추가할 수 있습니다.
+- 진화 규칙과 전환 수명주기는 아래 6차 작업에서 확장했습니다. 기본 무기의 Lv1~5 수치는 유지합니다.
 
 ### 검증
 
@@ -326,3 +326,40 @@ RESET 버튼은 없으며 위 window 도구는 Vite DEV에서만 노출됩니다
 향후 `CharacterDefinition.visual`에 정지/걷기 텍스처 키 세트를 추가하고 Player의 텍스처 선택을 연결하여 개별 아트로 교체할 수 있습니다.
 
 이 ZIP은 작업 환경의 프로젝트 사본입니다. `C:\work\survivor-protocol` 및 GitHub/Cloudflare에는 직접 반영하지 않았습니다.
+
+
+## 6차 무기 진화
+
+기본 무기 Lv5와 해당 강화 카드 1단계 이상을 보유하면, 다음 레벨업부터 진화 카드 **한 장**이 보장됩니다. 여러 후보가 있으면 그중 무작위로 한 장만 표시합니다. 나머지 두 장은 기존 카드입니다. 선택하지 않으면 진화 가능 상태를 유지합니다. 캐릭터의 기본 패시브만으로는 진화 조건을 충족하지 않습니다.
+
+| Lv5 기본 무기 | 필요 카드 | 진화 무기 (MAX) | 새로운 공격 특성 |
+|---|---|---|---|
+| 파사부 | 청명안 | 천뢰파사부 | 적중 후 최대 3대상 연쇄 번개, 청백 번개 부적 |
+| 염주 | 금강호신 | 금강염주 | 큰 금빛 염주 6개, 넓은 궤도, 강화 접촉 피해 |
+| 퇴마방울 | 속필 | 진혼령 | 큰 충격파 + 0.3초 후 잔향 파동 |
+| 벽력검 | 파사 강화 | 뇌신벽력검 | 넓은 검기, 발동당 최대 3번 번개 범위 폭발 |
+| 귀살화살 | 관통부 | 멸귀신궁 | 빠른 화살 4발, 추가 관통 14, 피해 감쇠 없음 |
+| 업화진 | 혼백 인도 | 지옥업화진 | 큰 진법 3개, 5.2초 지속, 강화된 0.3초 피해 tick |
+
+- `src/weapons/evolution/weaponEvolutionDefinitions.ts`: 타입, 조건, 번역 키.
+- `WeaponEvolutionManager.ts`: canEvolve / isEvolved / getAvailableEvolutions / evolve. 상태는 현재 Loadout과 획득 카드에서 계산하며 영구 저장하지 않습니다.
+- `EvolutionEffects.ts`: 시작 시 텍스처 생성, 12개 이미지 재사용. 번개는 적중·발동 때만 제한된 횟수로 탐색합니다.
+- `src/data/weaponConfig.ts`: 진화 무기 수치 및 EVOLUTION_EFFECTS. 기존 무기 ID와 수치 유지.
+- `WeaponLoadout.replaceWeapon`: 동일 슬롯/순서에 MAX 무기로 교체, 기본 무기 재획득 및 추가 강화 차단.
+- `WeaponSystem.syncLoadout`: 이전 구현체/염주/파동/검기/진법 파괴 및 이전 투사체 비활성화. 강화 카드는 소모하지 않음.
+- `UpgradeSystem`: 진화 후보와 일반 후보 통합, 진화 한 장 보장 및 중복 진화 차단.
+- `UpgradePanel`, `WeaponBar`, `GameScene`, 한/영 i18n: 밝은 한지·금색 테두리·진화 배지·조건·MAX, 진화 이름/인장 파동/flash/shake. 기존 효과음만 재사용.
+- 캐릭터 해금 처치 통계는 진화 후에도 기본 무기 계열로 귀속됩니다. 예: 지옥업화진 처치도 업화진 누적 해금에 포함. 진화 ID/상태는 localStorage에 저장하지 않습니다.
+- Retry는 선택한 캐릭터의 기본 시작 무기 Lv1이며, 진화/획득 카드 상태는 초기화됩니다.
+
+검증 명령:
+
+```bash
+npm run build
+npm test
+npm run test:evolution
+```
+
+진화 테스트는 6종 각각의 조건, 카드 선택, 동일 슬롯 교체, 이전 비주얼/투사체 정리, 새로운 공격 동작, 패시브 유지, 재등장 방지, Retry, 한/영 카드 크기 및 에셋 404/JS 오류를 검사합니다. 내부 개발 테스트에서만 조건/적 배치를 빠르게 준비하며 프로덕션 해금/성장 수치는 바꾸지 않습니다. 미리보기: `evolution-cards-preview.png`, `evolution-combat-preview.png`.
+
+최종 검증: 단위 테스트 26개 통과, 진화/기존 무기/캐릭터/오디오/전체 플레이 Chromium 테스트 통과. 6종 진화의 이전 비주얼·투사체 정리, 모든 새 공격 특성, 패시브 보존, MAX 후보 제외 및 Retry 초기화 확인. 350마리 제어 시뮬레이션(6종 진화 동시 + 투사체 적중/연쇄 포함) update p95 약 2.1ms. SwiftShader 소프트웨어 렌더링 수치이므로 실기기 FPS 보증은 아닙니다. 빌드 성공/TypeScript 오류 없음, 기존 Phaser 번들 크기 권고 경고만 남습니다.

@@ -7,7 +7,7 @@ import type { Pool } from "../utils/Pool";
 import { WEAPON_RULES, type WeaponStats } from "../data/weaponConfig";
 export class CombatSystem {
     private cooldown = 0;
-    constructor(private player: Player, private enemies: Pool<Enemy>, private bolts: Pool<Projectile>, private onShot: () => void = () => { }, private target?: (range: number) => Enemy | undefined, private weaponStats?: () => WeaponStats) { }
+    constructor(private player: Player, private enemies: Pool<Enemy>, private bolts: Pool<Projectile>, private onShot: () => void = () => { }, private target?: (range: number) => Enemy | undefined, private weaponStats?: () => WeaponStats, private onProjectile?: (b:Projectile)=>void) { }
     update(dt: number) {
         this.cooldown -= dt;
         if (this.cooldown > 0)
@@ -41,6 +41,7 @@ export class CombatSystem {
                 break;
             const critical = Math.random() < p.stats.criticalChance;
             b.fire(p.x, p.y, angle + (i - (count - 1) / 2) * ARC_BOLT.spread, p.stats.projectileSpeed * (w?.speed ?? 1), p.stats.damage * (w?.damage ?? 1) * (critical ? BALANCE.criticalMultiplier : 1), p.stats.piercing + (w?.pierce ?? 0), critical, w?.duration ?? ARC_BOLT.lifetime);
+            this.onProjectile?.(b);
             this.onShot();
         }
     }

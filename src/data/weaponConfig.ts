@@ -1,6 +1,9 @@
 import type { TranslationKey } from '../i18n';
 export const WEAPON_IDS = ['arc-bolt', 'rosary', 'exorcism-bell', 'lightning-sword', 'ghost-arrow', 'hellfire'] as const;
-export type WeaponId = typeof WEAPON_IDS[number];
+export type BaseWeaponId = typeof WEAPON_IDS[number];
+export const EVOLVED_WEAPON_IDS = ["thunder-talisman", "vajra-rosary", "soul-bell", "thunder-god-sword", "demon-slayer-bow", "infernal-hellfire"] as const;
+export type EvolvedWeaponId = typeof EVOLVED_WEAPON_IDS[number];
+export type WeaponId = BaseWeaponId | EvolvedWeaponId;
 export interface WeaponStats {
     damage: number;
     cooldown: number;
@@ -13,6 +16,7 @@ export interface WeaponStats {
 }
 export interface WeaponDefinition {
     id: WeaponId;
+    baseWeaponId?: BaseWeaponId;
     nameKey: TranslationKey;
     descriptionKey: TranslationKey;
     stepKeys: readonly TranslationKey[];
@@ -31,6 +35,12 @@ const make = (id: WeaponId, key: string, values: WeaponStats[]): WeaponDefinitio
 });
 /** Seconds / world pixels. Talisman damage & cooldown are multipliers of existing player stats. */
 export const WEAPONS: Record<WeaponId, WeaponDefinition> = {
+    'thunder-talisman': { id: 'thunder-talisman', baseWeaponId: 'arc-bolt', nameKey: 'evolution.thunder-talisman.name', descriptionKey: 'evolution.thunder-talisman.description', stepKeys: [], maxLevel: 1, levels: [{ "damage": 2, "cooldown": 0.72, "projectileCount": 2, "range": 780, "duration": 1.8, "pierce": 2, "radius": 5, "speed": 1.15 }] },
+    'vajra-rosary': { id: 'vajra-rosary', baseWeaponId: 'rosary', nameKey: 'evolution.vajra-rosary.name', descriptionKey: 'evolution.vajra-rosary.description', stepKeys: [], maxLevel: 1, levels: [{ "damage": 36, "cooldown": 0.38, "projectileCount": 6, "range": 112, "duration": 0, "pierce": 0, "radius": 15, "speed": 3.3 }] },
+    'soul-bell': { id: 'soul-bell', baseWeaponId: 'exorcism-bell', nameKey: 'evolution.soul-bell.name', descriptionKey: 'evolution.soul-bell.description', stepKeys: [], maxLevel: 1, levels: [{ "damage": 67, "cooldown": 1.65, "projectileCount": 1, "range": 295, "duration": 0.5, "pierce": 0, "radius": 295, "speed": 0 }] },
+    'thunder-god-sword': { id: 'thunder-god-sword', baseWeaponId: 'lightning-sword', nameKey: 'evolution.thunder-god-sword.name', descriptionKey: 'evolution.thunder-god-sword.description', stepKeys: [], maxLevel: 1, levels: [{ "damage": 120, "cooldown": 1.5, "projectileCount": 2, "range": 290, "duration": 0.3, "pierce": 0, "radius": 0, "speed": 0 }] },
+    'demon-slayer-bow': { id: 'demon-slayer-bow', baseWeaponId: 'ghost-arrow', nameKey: 'evolution.demon-slayer-bow.name', descriptionKey: 'evolution.demon-slayer-bow.description', stepKeys: [], maxLevel: 1, levels: [{ "damage": 67, "cooldown": 1.1, "projectileCount": 4, "range": 1200, "duration": 1.5, "pierce": 14, "radius": 3, "speed": 1200 }] },
+    'infernal-hellfire': { id: 'infernal-hellfire', baseWeaponId: 'hellfire', nameKey: 'evolution.infernal-hellfire.name', descriptionKey: 'evolution.infernal-hellfire.description', stepKeys: [], maxLevel: 1, levels: [{ "damage": 24, "cooldown": 3.8, "projectileCount": 3, "range": 600, "duration": 5.2, "pierce": 0, "radius": 138, "speed": 0 }] },
     'arc-bolt': make('arc-bolt', 'talisman', levels({ damage: 1, cooldown: 1, projectileCount: 0, range: 780, duration: 1.8, pierce: 0, radius: 5, speed: 1 }, [
         { damage: 1.2 }, { projectileCount: 1 }, { cooldown: .85 }, { damage: 1.4, pierce: 1 },
     ])),
@@ -56,6 +66,8 @@ export const WEAPON_RULES = {
     arrowSpread: .065, hellfireSeparation: 125, maxFields: 4,
 };
 export function weaponDescriptionParams(id: WeaponId, nextLevel: number) {
-    const s = WEAPONS[id].levels[Math.min(4, Math.max(0, nextLevel - 1))];
+    const s = WEAPONS[id].levels[Math.min(WEAPONS[id].levels.length - 1, Math.max(0, nextLevel - 1))];
     return { damage: s.damage, damagePercent: Math.round((s.damage - 1) * 100), cooldownPercent: Math.round((1 - s.cooldown) * 100), cooldown: s.cooldown, count: s.projectileCount, range: s.range, radius: s.radius, duration: s.duration, pierce: s.pierce };
 }
+export const EVOLUTION_EFFECTS = { chainRange: 150, chainTargets: 3, chainDamage: .45, explosionRadius: 84, explosionDamage: .4, explosionsPerCast: 3, echoDelay: .3, echoDamage: .7, infernalTick: .3, maxFields: 8, visualPool: 12, visualLifetime: .2 };
+export function baseWeaponId(id: WeaponId): BaseWeaponId { return WEAPONS[id].baseWeaponId ?? id as BaseWeaponId; }

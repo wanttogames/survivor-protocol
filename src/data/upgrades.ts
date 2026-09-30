@@ -4,6 +4,7 @@ import { BALANCE, type PlayerStats } from "../config/balance";
 export type Rarity = "Common" | "Rare" | "Epic";
 export interface UpgradeDefinition {
   id: string;
+  evolutionId?: string;
   weaponId?: WeaponId;
   nameKey: TranslationKey;
   descriptionKey: TranslationKey;

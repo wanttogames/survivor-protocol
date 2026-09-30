@@ -1,5 +1,35 @@
 import type { LocaleMessages } from "./en";
 export const ko = {
+  evolution: {
+    "thunder-talisman": {
+      "name": "천뢰파사부",
+      "description": "천뢰를 두른 부적이 적중한 뒤 주변 귀물에 연쇄 번개를 전합니다."
+    },
+    "vajra-rosary": {
+      "name": "금강염주",
+      "description": "더 큰 금빛 염주 여섯 알이 넓은 반경에서 귀물을 막습니다."
+    },
+    "soul-bell": {
+      "name": "진혼령",
+      "description": "넓어진 충격파 뒤에 잔향 파동이 한 번 더 울립니다."
+    },
+    "thunder-god-sword": {
+      "name": "뇌신벽력검",
+      "description": "거대한 검기가 귀물을 베고 번개 폭발을 일으킵니다."
+    },
+    "demon-slayer-bow": {
+      "name": "멸귀신궁",
+      "description": "빠른 화살 네 발이 긴 대열을 꿰뚫습니다."
+    },
+    "infernal-hellfire": {
+      "name": "지옥업화진",
+      "description": "거대한 진법 세 개가 오래 남아 강한 불길로 귀물을 태웁니다."
+    },
+    "badge": "진화",
+    "max": "완성",
+    "requirements": "{weapon} Lv{level} + {upgrade}",
+    "announcement": "{name} · 진화"
+  },
   character:{
   "exorcist": {
     "name": "퇴마사",
