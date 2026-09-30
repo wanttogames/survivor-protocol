@@ -1,3 +1,12 @@
+import { BossManager } from '../bosses/BossManager';
+import { Boss } from '../bosses/Boss';
+import { BossRewardManager } from '../bosses/BossRewardManager';
+import { EliteManager } from '../encounters/EliteManager';
+import { EncounterManager } from '../encounters/EncounterManager';
+import { BOSSES, ENCOUNTER_CONFIG as C, type BossId } from '../encounters/encounterConfig';
+import { BossHud } from '../ui/BossHud';
+import { EncounterAnnouncement } from '../ui/EncounterAnnouncement';
+import { WEAPONS } from '../data/weaponConfig';
 import { getCharacterManager } from "../characters/CharacterManager";
 import type { WeaponId } from "../data/weaponConfig";
 import { AUDIO_KEYS as K } from "../audio/audioKeys";
@@ -23,6 +32,14 @@ import { Hud } from "../ui/Hud";
 import { UpgradePanel } from "../ui/UpgradePanel";
 import { label } from "../ui/common";
 export class GameScene extends Phaser.Scene {
+    bosses!: BossManager;
+    encounters!: EncounterManager;
+    bossRewards!: BossRewardManager;
+    private elites!: EliteManager;
+    private bossHud!: BossHud;
+    private announcement!: EncounterAnnouncement;
+    private pendingRewards: BossId[] = [];
+    runStats = { eliteKills: 0, bossKills: 0, bossesDefeated: [] as BossId[], victory: false };
     private saveTimer = 0;
     private progress = getCharacterManager().unlocks;
     private audio!: AudioManager;
@@ -57,6 +74,8 @@ export class GameScene extends Phaser.Scene {
         this.audio = AudioManager.forGame(this.game);
         this.audio.stopSfx();
         this.audio.playBgm(K.NIGHT_STAGE);
+        this.pendingRewards = [];
+        this.runStats = { eliteKills: 0, bossKills: 0, bossesDefeated: [], victory: false };
         this.elapsed = 0;
         this.saveTimer = 0;
         this.kills = 0;
@@ -98,6 +117,14 @@ export class GameScene extends Phaser.Scene {
         this.panel = new UpgradePanel(this, this.upgrades);
         this.hud = new Hud(this, this.weapons.loadout);
         this.spawn = new EnemySpawnSystem(this.enemies);
+        this.announcement = new EncounterAnnouncement(this);
+        this.bosses = new BossManager(this, this.player, this.enemies, enemyGroup, d => this.hurtPlayer(d), (key, name) => { this.announcement.show(key, name); this.audio.playSfx(K.LEVEL_UP); });
+        this.bossHud = new BossHud(this, this.bosses);
+        this.elites = new EliteManager(this, this.enemies, this.player, amount => { this.player.stats.hp = Math.min(this.player.stats.maxHp, this.player.stats.hp + amount); this.audio.playSfx(K.SOUL_PICKUP); });
+        this.encounters = new EncounterManager(BALANCE.duration, e => { if (e.type === 'boss')
+            return this.bosses.spawnBoss(e.bossId); const spawned = this.elites.spawn(e.eliteId, e.strength, this.elapsed); if (spawned)
+            this.announcement.show('boss.elite'); return spawned; });
+        this.bossRewards = new BossRewardManager(this.upgrades, this.levels, amount => { this.levels.add(amount); this.progress.collectSouls(amount); });
         this.particles = this.add
             .particles(0, 0, "ash", {
             emitting: false,
@@ -118,17 +145,17 @@ export class GameScene extends Phaser.Scene {
         });
         this.physics.add.overlap(this.player, enemyGroup, (_p, e) => {
             const enemy = e as Enemy;
-            if (!enemy.active || this.player.invulnerable > 0 || this.ended)
-                return;
-            this.player.stats.hp = Math.max(0, this.player.stats.hp - enemy.damage * this.player.stats.damageTakenMultiplier);
-            this.player.invulnerable = BALANCE.contactInvulnerability;
-            this.cameras.main.shake(90, 0.003);
-            this.visuals.playerHit();
-            this.audio.playSfx(K.PLAYER_HIT);
-            if (this.player.stats.hp <= 0)
-                this.finish(false);
+            if (enemy.active)
+                this.hurtPlayer(enemy.damage);
         });
         this.keys = this.input.keyboard!.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,ESC,ONE,TWO,THREE") as Record<string, Phaser.Input.Keyboard.Key>;
+        // Event-based card input survives a short keypress between slow render frames.
+        ["ONE", "TWO", "THREE"].forEach((name,index)=>{
+            const eventName=`keydown-${name}`;
+            const select=(event:KeyboardEvent)=>{if(!event.repeat&&this.panel.open)this.panel.select(index);};
+            this.input.keyboard!.on(eventName,select);
+            this.events.once("shutdown",()=>this.input.keyboard?.off(eventName,select));
+        });
         this.pauseText = label(this, 640, 365, () => t("pause.message"), 26, "#b8a16a")
             .setOrigin(0.5)
             .setAlign("center")
@@ -145,6 +172,10 @@ export class GameScene extends Phaser.Scene {
             this.game.events.off(Phaser.Core.Events.BLUR, blur);
             this.panel.close();
             this.weapons.destroy();
+            this.bosses.destroy();
+            this.bossHud.destroy();
+            this.elites.destroy();
+            this.announcement.destroy();
             this.progress.flush();
             this.audio.stopBgm();
             if (!this.ended)
@@ -152,6 +183,17 @@ export class GameScene extends Phaser.Scene {
         });
         this.cameras.main.fadeIn(250);
         this.hud.update(this.player, this.levels, 0, 0);
+    }
+    private hurtPlayer(damage: number) {
+        if (this.ended || this.paused || this.panel.open || this.player.invulnerable > 0)
+            return;
+        this.player.stats.hp = Math.max(0, this.player.stats.hp - damage * this.player.stats.damageTakenMultiplier);
+        this.player.invulnerable = BALANCE.contactInvulnerability;
+        this.cameras.main.shake(90, .003);
+        this.visuals.playerHit();
+        this.audio.playSfx(K.PLAYER_HIT);
+        if (this.player.stats.hp <= 0)
+            this.finish(false);
     }
     private togglePause() {
         this.paused = !this.paused;
@@ -169,21 +211,16 @@ export class GameScene extends Phaser.Scene {
         if (this.ended)
             return;
         this.visuals.update(Math.min(delta / 1000, 0.05));
-        if (this.panel.open) {
-            if (Phaser.Input.Keyboard.JustDown(this.keys.ONE))
-                this.panel.select(0);
-            else if (Phaser.Input.Keyboard.JustDown(this.keys.TWO))
-                this.panel.select(1);
-            else if (Phaser.Input.Keyboard.JustDown(this.keys.THREE))
-                this.panel.select(2);
+        if (this.panel.open)
             return;
-        }
         if (Phaser.Input.Keyboard.JustDown(this.keys.ESC))
             this.togglePause();
         if (this.paused)
             return;
         const dt = Math.min(delta / 1000, 0.05);
         this.elapsed += dt;
+        this.announcement.update(dt);
+        this.encounters.update(this.elapsed);
         this.saveTimer += dt;
         if (this.saveTimer >= 1) {
             this.saveTimer = 0;
@@ -195,16 +232,25 @@ export class GameScene extends Phaser.Scene {
         const y = Number(this.keys.S.isDown || this.keys.DOWN.isDown) -
             Number(this.keys.W.isDown || this.keys.UP.isDown);
         this.player.move(x, y, dt);
-        this.spawn.update(dt, this.elapsed, this.player.x, this.player.y);
+        this.spawn.update(dt, Math.min(this.elapsed, BALANCE.duration), this.player.x, this.player.y, this.bosses.active ? C.normalSpawnMultiplier : 1);
         for (const e of this.enemies.items)
-            if (e.active) {
-                if (Phaser.Math.Distance.Squared(e.x, e.y, this.player.x, this.player.y) >
+            if (e.active && e.rank !== 'boss') {
+                if (e.rank === 'normal' && Phaser.Math.Distance.Squared(e.x, e.y, this.player.x, this.player.y) >
                     1500 ** 2)
                     e.disableBody(true, true);
                 else
                     e.chase(this.player.x, this.player.y, dt);
             }
+        this.bosses.update(dt);
+        if (this.ended)
+            return;
+        this.elites.update(dt);
         this.weapons.update(dt);
+        this.bossHud.update();
+        if (this.bosses.finalDefeated) {
+            this.finish(true);
+            return;
+        }
         this.updateOrbs(dt);
         for (const d of this.damageTexts)
             if (d.ttl > 0) {
@@ -215,11 +261,9 @@ export class GameScene extends Phaser.Scene {
                     d.text.setVisible(false);
             }
         this.hud.update(this.player, this.levels, this.elapsed, this.kills);
-        if (this.elapsed >= BALANCE.duration) {
-            this.finish(true);
-            return;
-        }
-        if (this.levels.pending > 0)
+        if (this.pendingRewards.length)
+            this.showBossReward();
+        else if (this.levels.pending > 0)
             this.showUpgrade();
     }
     private enemyDamaged(enemy: Enemy, value: number, critical: boolean, source: WeaponId) {
@@ -231,11 +275,28 @@ export class GameScene extends Phaser.Scene {
     }
     private kill(enemy: Enemy, source: WeaponId) {
         const x = enemy.x, y = enemy.y, xp = enemy.xp;
+        if (enemy.rank === 'elite') {
+            this.runStats.eliteKills++;
+            this.elites.defeated(enemy);
+        }
+        if (enemy instanceof Boss) {
+            const id = enemy.definition.id;
+            this.bosses.defeated(enemy);
+            this.runStats.bossKills++;
+            this.runStats.bossesDefeated.push(id);
+            this.progress.bossKill(id);
+            if (id === 'vengeful-general')
+                this.pendingRewards.push(id);
+        }
         enemy.disableBody(true, true);
+        if (enemy instanceof Boss)
+            this.bossHud.update();
         this.kills++;
         this.progress.kill(source, this.kills);
         this.audio.playSfx(K.ENEMY_DEATH);
         this.particles.emitParticleAt(x, y, 5);
+        if (xp <= 0)
+            return;
         const orb = this.orbs.acquire();
         if (orb)
             orb.spawn(x, y, xp);
@@ -301,6 +362,45 @@ export class GameScene extends Phaser.Scene {
             .setAlpha(1)
             .setVisible(true);
     }
+    private showBossReward() {
+        const id = this.pendingRewards.shift();
+        if (!id)
+            return;
+        this.audio.playSfx(K.LEVEL_UP);
+        this.physics.pause();
+        this.particles.pause();
+        this.panel.show(this.bossRewards.getBossRewardOptions(this.player.stats), choice => {
+            if (this.bossRewards.applyBossReward(choice, this.player.stats))
+                this.afterCard(choice);
+            this.continueAfterCard();
+        }, { bossNameKey: BOSSES[id].nameKey });
+    }
+    private continueAfterCard() {
+        if (this.pendingRewards.length)
+            this.showBossReward();
+        else if (this.levels.pending > 0)
+            this.showUpgrade();
+        else if (!this.paused) {
+            this.physics.resume();
+            this.particles.resume();
+        }
+    }
+    private afterCard(choice: import('../systems/UpgradeSystem').UpgradeChoice) {
+        this.audio.playSfx(K.UPGRADE_SELECT);
+        this.weapons.syncLoadout();
+        if (choice.definition.evolutionId) {
+            this.audio.playSfx(K.LEVEL_UP);
+            this.visuals.awaken(this.player.x, this.player.y);
+            this.cameras.main.flash(180, 204, 167, 88, false);
+            this.cameras.main.shake(90, .002);
+            const title = label(this, 640, 260, () => t('evolution.announcement', { name: t(choice.definition.nameKey) }), 26, '#efd49b').setOrigin(.5).setDepth(205);
+            this.tweens.add({ targets: title, alpha: 0, delay: 700, duration: 600, onComplete: () => title.destroy() });
+        }
+        if (choice.definition.weaponId)
+            this.progress.weaponLevel(choice.definition.weaponId, this.weapons.loadout.level(choice.definition.weaponId));
+        this.weaponBar.refresh();
+        this.hud.update(this.player, this.levels, this.elapsed, this.kills);
+    }
     private showUpgrade() {
         if (!this.levels.consume())
             return;
@@ -310,42 +410,29 @@ export class GameScene extends Phaser.Scene {
         this.visuals.awaken(this.player.x, this.player.y);
         this.cameras.main.flash(100, 184, 161, 106, false);
         this.panel.show(this.upgrades.roll(), (choice) => {
-            this.audio.playSfx(K.UPGRADE_SELECT);
             this.upgrades.apply(choice, this.player.stats);
-            this.weapons.syncLoadout();
-            if(choice.definition.evolutionId){
-                this.audio.playSfx(K.LEVEL_UP);
-                this.visuals.awaken(this.player.x,this.player.y);
-                this.cameras.main.flash(180,204,167,88,false);
-                this.cameras.main.shake(90,.002);
-                const title=label(this,640,260,()=>t('evolution.announcement',{name:t(choice.definition.nameKey)}),26,'#efd49b').setOrigin(.5).setScrollFactor(0).setDepth(205);
-                this.tweens.add({targets:title,alpha:0,delay:700,duration:600,onComplete:()=>title.destroy()});
-            }
-
-            if (choice.definition.weaponId)
-                this.progress.weaponLevel(choice.definition.weaponId, this.weapons.loadout.level(choice.definition.weaponId));
-            this.weaponBar.refresh();
-            this.hud.update(this.player, this.levels, this.elapsed, this.kills);
-            if (this.levels.pending > 0)
-                this.showUpgrade();
-            else {
-                this.physics.resume();
-                this.particles.resume();
-            }
+            this.afterCard(choice);
+            this.continueAfterCard();
         });
     }
     finish(won: boolean) {
         if (this.ended)
             return;
         this.ended = true;
-        this.progress.finishRun(this.kills, Math.min(this.elapsed, BALANCE.duration));
+        this.runStats.victory = won;
+        this.progress.finishRun(this.kills, this.elapsed);
         this.audio.endRun(!won);
+        if (won)
+            this.audio.playSfx(K.LEVEL_UP);
         this.physics.pause();
         this.scene.start("GameOver", {
-            time: Math.min(this.elapsed, BALANCE.duration),
+            time: this.elapsed,
             level: this.levels.level,
             kills: this.kills,
             won,
+            characterId: this.player.character.id,
+            evolvedWeapons: Array.from(this.weapons.loadout.entries()).filter(([id]) => WEAPONS[id].baseWeaponId).map(([id]) => id),
+            ...this.runStats,
             unlocked: this.progress.takeNotifications(),
         });
     }

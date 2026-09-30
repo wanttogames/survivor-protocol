@@ -1,5 +1,45 @@
 import type { LocaleMessages } from "./en";
 export const ko = {
+  boss: {
+    "general": {
+      "name": "원귀 장군"
+    },
+    "king": {
+      "name": "귀왕"
+    },
+    "appear": "{name} 출현",
+    "phase": "{name} · 귀기 폭주",
+    "elite": "강한 귀물이 깨어났습니다",
+    "defeated": "{name} 처치",
+    "hp": "체력 {value}%"
+  },
+  bossReward: {
+    "title": "봉인의 힘을 거두십시오",
+    "guide": "보상 하나를 선택하면 전투가 계속됩니다",
+    "badge": "보스 보상",
+    "runOnly": "이번 출정 동안 적용",
+    "instant": "즉시 적용",
+    "heal": {
+      "name": "호신의 기운",
+      "description": "최대 체력의 {value}%를 회복합니다"
+    },
+    "damage": {
+      "name": "장군의 비급",
+      "description": "모든 공격력 +{value}%"
+    },
+    "souls": {
+      "name": "응축된 혼백",
+      "description": "혼백 {value}을 즉시 얻습니다"
+    }
+  },
+  result: {
+    "character": "퇴마인 · {name}",
+    "evolved": "진화 무기 · {names}",
+    "bosses": "보스 처치 · {names}",
+    "none": "없음",
+    "elites": "엘리트 처치 · {count}"
+  },
+
   evolution: {
     "thunder-talisman": {
       "name": "천뢰파사부",
@@ -99,7 +139,7 @@ export const ko = {
     play: "시작",
     moveGuide: "이동   WASD / 방향키",
     autoAttack: "공격은 자동으로 진행됩니다   •   ESC 일시정지",
-    sector: "{character} · {weapon}\n새벽까지 열 분",
+    sector: "{character} · {weapon}\n귀왕을 봉인하고 새벽을 맞이하라",
   },
   hud: {
     characterBuild:"{character}   /   치명타 {critical}%",
@@ -127,9 +167,9 @@ export const ko = {
     controls: "숫자 1 / 2 / 3 또는 카드 클릭    •    전투 일시정지 중",
   },
   gameOver: {
-    won: "새벽이 밝았습니다",
+    won: "승리",
     lost: "기력이 다했습니다",
-    wonMessage: "긴 밤을 버텨냈습니다",
+    wonMessage: "귀왕을 봉인했습니다",
     lostMessage: "귀야는 아직 끝나지 않았다",
     time: "생존 시간",
     level: "도달 레벨",

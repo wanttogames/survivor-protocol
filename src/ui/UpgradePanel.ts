@@ -19,7 +19,7 @@ export class UpgradePanel {
   get open() {
     return this.choices.length > 0;
   }
-  show(choices: UpgradeChoice[], callback: (c: UpgradeChoice) => void) {
+  show(choices: UpgradeChoice[], callback: (c: UpgradeChoice) => void, options?:{bossNameKey:import('../i18n').TranslationKey}) {
     this.close();
     this.choices = choices;
     this.callback = callback;
@@ -32,24 +32,24 @@ export class UpgradePanel {
         .setInteractive(),
     );
     add(
-      label(this.scene, 640, 132, () => t("upgrade.eyebrow"), 13, T.text.gold)
+      label(this.scene, 640, 132, () => options?t("boss.defeated",{name:t(options.bossNameKey)}):t("upgrade.eyebrow"), 13, T.text.gold)
         .setOrigin(0.5)
         .setDepth(202),
     );
     add(
-      label(this.scene, 640, 174, () => t("upgrade.title"), 36)
+      label(this.scene, 640, 174, () => t(options?"bossReward.title":"upgrade.title"), 36)
         .setOrigin(0.5)
         .setDepth(202),
     );
     add(
-      label(this.scene, 640, 222, () => t("upgrade.guide"), 12, T.text.muted)
+      label(this.scene, 640, 222, () => t(options?"bossReward.guide":"upgrade.guide"), 12, T.text.muted)
         .setOrigin(0.5)
         .setDepth(202),
     );
     choices.forEach((c, i) => {
       const x = 190 + i * 330;
       const evolution=WEAPON_EVOLUTIONS.find(e=>e.id===c.definition.evolutionId);
-      const color = evolution ? 0xb18436 :
+      const color = (evolution||options) ? 0xb18436 :
         c.rarity === "Epic"
           ? 0x884035
           : c.rarity === "Rare"
@@ -57,8 +57,8 @@ export class UpgradePanel {
             : 0x675538;
       const hex = "#" + color.toString(16);
       const box = this.scene.add
-        .rectangle(x + 120, 432, 300, 340, evolution?T.paperLight:T.paper)
-        .setStrokeStyle(evolution?3:1, color, evolution?1:0.6)
+        .rectangle(x + 120, 432, 300, 340, (evolution||options)?T.paperLight:T.paper)
+        .setStrokeStyle((evolution||options)?3:1, color, (evolution||options)?1:0.6)
         .setScrollFactor(0)
         .setDepth(201)
         .setInteractive({ useHandCursor: true });
@@ -92,7 +92,7 @@ export class UpgradePanel {
         .lineBetween(x + 225, 345, x + 212, 358);
       add(ornament);
       box.on("pointerover", () => box.setFillStyle(T.paperLight));
-      box.on("pointerout", () => box.setFillStyle(evolution?T.paperLight:T.paper));
+      box.on("pointerout", () => box.setFillStyle((evolution||options)?T.paperLight:T.paper));
       box.on("pointerdown", () => this.select(i));
       add(
         label(
@@ -101,7 +101,7 @@ export class UpgradePanel {
           288,
           () =>
             t("upgrade.rarity", {
-              rarity: evolution?t("evolution.badge"):c.definition.weaponId ? t(this.upgrades.currentLevel(c.definition)===0?"upgrade.newWeapon":"upgrade.weaponUpgrade") : t(`rarity.${c.rarity}`),
+              rarity: evolution?t("evolution.badge"):options?t("bossReward.badge"):c.definition.weaponId ? t(this.upgrades.currentLevel(c.definition)===0?"upgrade.newWeapon":"upgrade.weaponUpgrade") : t(`rarity.${c.rarity}`),
               number: `0${i + 1}`,
             }),
           12,
@@ -130,7 +130,7 @@ export class UpgradePanel {
           x,
           545,
           () =>
-            evolution?t("evolution.requirements",{weapon:t(WEAPONS[evolution.baseWeaponId].nameKey),level:evolution.requiredWeaponLevel,upgrade:t(UPGRADES.find(u=>u.id===evolution.requiredUpgradeIds[0])!.nameKey)}):t("upgrade.level", {
+            evolution?t("evolution.requirements",{weapon:t(WEAPONS[evolution.baseWeaponId].nameKey),level:evolution.requiredWeaponLevel,upgrade:t(UPGRADES.find(u=>u.id===evolution.requiredUpgradeIds[0])!.nameKey)}):c.definition.bossRewardId&&!c.definition.weaponId?t(c.definition.bossRewardId==='damage'?"bossReward.runOnly":"bossReward.instant"):t("upgrade.level", {
               current: this.upgrades.currentLevel(c.definition),
               next: this.upgrades.currentLevel(c.definition) + 1,
             }),

@@ -5,8 +5,8 @@ import type { Pool } from "../utils/Pool";
 export class EnemySpawnSystem {
   private cooldown = 0;
   constructor(private pool: Pool<Enemy>) {}
-  update(dt: number, t: number, x: number, y: number) {
-    this.cooldown -= dt;
+  update(dt: number, t: number, x: number, y: number, rateMultiplier = 1) {
+    this.cooldown -= dt * rateMultiplier;
     if (this.cooldown > 0) return;
     this.cooldown = Math.max(
       BALANCE.spawn.minInterval,

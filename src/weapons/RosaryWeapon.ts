@@ -1,6 +1,5 @@
 import type Phaser from 'phaser';
 import type { Enemy } from '../entities/Enemy';
-import { ENEMIES } from '../data/enemies';
 import { WEAPON_RULES } from '../data/weaponConfig';
 import type { WeaponId } from '../data/weaponConfig';
 import { Weapon, type WeaponContext } from './Weapon';
@@ -31,13 +30,13 @@ export class RosaryWeapon extends Weapon {
             return;
         this.scan = WEAPON_RULES.rosaryScan;
         for (const e of this.ctx.enemies.items) {
-            if (!e.active || !inCircle(e.x, e.y, p.x, p.y, s.range + s.radius + ENEMIES[e.kind].radius))
+            if (!e.active || !inCircle(e.x, e.y, p.x, p.y, s.range + s.radius + e.collisionRadius))
                 continue;
             const hit = this.hits.get(e);
             if (hit?.generation === e.generation && hit.next > this.clock)
                 continue;
             for (const b of this.beads)
-                if (inCircle(e.x, e.y, b.x, b.y, s.radius + ENEMIES[e.kind].radius)) {
+                if (inCircle(e.x, e.y, b.x, b.y, s.radius + e.collisionRadius)) {
                     if (hit) {
                         hit.generation = e.generation;
                         hit.next = this.clock + s.cooldown;

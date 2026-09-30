@@ -1,3 +1,4 @@
+import { BOSSES, type BossId } from '../encounters/encounterConfig';
 import { baseWeaponId } from '../data/weaponConfig';
 import { CHARACTERS } from './characterDefinitions';
 import type { CharacterDefinition, CharacterId } from './characterTypes';
@@ -8,6 +9,7 @@ export interface SaveStorage {
     removeItem(key: string): void;
 }
 export interface CharacterProgress {
+    bossKills:Partial<Record<BossId,number>>;
     version: 1;
     totalSoulCollected: number;
     maxKillsInRun: number;
@@ -17,7 +19,7 @@ export interface CharacterProgress {
     unlockedCharacters: CharacterId[];
 }
 export const PROGRESS_KEY = 'survivor-protocol.progress';
-const fresh = (): CharacterProgress => ({ version: 1, totalSoulCollected: 0, maxKillsInRun: 0, maxSurvivalTime: 0, weaponMaxLevels: {}, weaponKillCounts: {}, unlockedCharacters: ['exorcist'] });
+const fresh = (): CharacterProgress => ({ bossKills:{}, version: 1, totalSoulCollected: 0, maxKillsInRun: 0, maxSurvivalTime: 0, weaponMaxLevels: {}, weaponKillCounts: {}, unlockedCharacters: ['exorcist'] });
 const number = (v: unknown) => typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(Number.MAX_SAFE_INTEGER, v)) : 0;
 const record = (v: unknown): Record<string, unknown> => v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : {};
 export class CharacterUnlockManager {
@@ -36,6 +38,7 @@ export class CharacterUnlockManager {
                     this.progress.weaponMaxLevels[id] = Math.min(5, Math.floor(number(record(saved.weaponMaxLevels)[id])));
                     this.progress.weaponKillCounts[id] = Math.floor(number(record(saved.weaponKillCounts)[id]));
                 }
+                for(const id of Object.keys(BOSSES) as BossId[])this.progress.bossKills[id]=Math.floor(number(record(saved.bossKills)[id]));
                 const unlocked = Array.isArray(saved.unlockedCharacters) ? saved.unlockedCharacters : [];
                 this.progress.unlockedCharacters = CHARACTERS.filter(c => c.id === 'exorcist' || unlocked.includes(c.id)).map(c => c.id);
             }
@@ -73,6 +76,7 @@ export class CharacterUnlockManager {
         this.progress.maxSurvivalTime = number(seconds);
         this.changed();
     } }
+    bossKill(id:BossId){this.progress.bossKills[id]=(this.progress.bossKills[id]??0)+1;this.dirty=true;}
     finishRun(kills: number, seconds: number) { this.progress.maxKillsInRun = Math.max(this.progress.maxKillsInRun, Math.floor(number(kills))); this.survival(seconds); this.changed(); this.flush(); }
     takeNotifications() { const result = this.notifications; this.notifications = []; return result; }
     flush() { if (!this.dirty)

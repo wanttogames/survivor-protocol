@@ -60,6 +60,8 @@ try {
     });
     assert.ok(await page.evaluate(() => window.__GUIYA_CHARACTERS__.unlocks.isUnlocked('forbidden_sorcerer')));
     await page.evaluate(() => { const s = window.__SURVIVOR_GAME__.scene.getScene('Game'); s.elapsed = 599.99; });
+  await page.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.getScene('Game').bosses.spawnedIds.has('ghost-king'));
+  await page.evaluate(()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');s.levels.pending=0;s.panel.close();for(const e of s.enemies.items)if(e.active&&e.rank==='boss'&&e.definition.id==='ghost-king')s.weapons.strike(e,1000000,'arc-bolt');s.paused=false;s.physics.resume();});
     await page.waitForFunction(() => window.__SURVIVOR_GAME__.scene.isActive('GameOver'));
     assert.ok(await page.evaluate(() => window.__GUIYA_CHARACTERS__.unlocks.isUnlocked('archer')));
     assert.ok((await texts()).some(t => t.startsWith('새 인물 해금')));

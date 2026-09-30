@@ -221,6 +221,8 @@ try {
   await page.evaluate(
     () => (window.__SURVIVOR_GAME__.scene.getScene("Game").elapsed = 599.98),
   );
+  await page.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.getScene('Game').bosses.spawnedIds.has('ghost-king'));
+  await page.evaluate(()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');s.levels.pending=0;s.panel.close();for(const e of s.enemies.items)if(e.active&&e.rank==='boss'&&e.definition.id==='ghost-king')s.weapons.strike(e,1000000,'arc-bolt');s.paused=false;s.physics.resume();});
   await page.waitForFunction(() =>
     window.__SURVIVOR_GAME__.scene.isActive("GameOver"),
   );

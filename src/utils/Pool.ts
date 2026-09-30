@@ -1,5 +1,6 @@
 export interface Poolable {
   active: boolean;
+  poolEligible?: boolean;
 }
 export class Pool<T extends Poolable> {
   readonly items: T[] = [];
@@ -8,7 +9,7 @@ export class Pool<T extends Poolable> {
     readonly capacity: number,
   ) {}
   acquire(): T | undefined {
-    for (const item of this.items) if (!item.active) return item;
+    for (const item of this.items) if (!item.active && item.poolEligible !== false) return item;
     if (this.items.length >= this.capacity) return;
     const item = this.create();
     this.items.push(item);

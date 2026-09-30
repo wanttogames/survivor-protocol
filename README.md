@@ -31,7 +31,7 @@ npm test
 - 성장: 카드 클릭 또는 숫자 1 / 2 / 3
 - 일시정지: ESC. 창 포커스를 잃어도 정지합니다.
 - 시작 / 결과 화면 재시도: Enter 또는 버튼
-- 목표: 10분 생존. HP 0이면 게임 오버, 10분 도달 시 생존 성공.
+- 목표: 초반 성장 → 엘리트 → 원귀 장군 → 강화 엘리트 → 귀왕 처치. 10분에는 귀왕이 등장하며, 귀왕을 처치해야 승리합니다. HP 0이면 게임 오버입니다.
 
 ## 구성
 
@@ -363,3 +363,86 @@ npm run test:evolution
 진화 테스트는 6종 각각의 조건, 카드 선택, 동일 슬롯 교체, 이전 비주얼/투사체 정리, 새로운 공격 동작, 패시브 유지, 재등장 방지, Retry, 한/영 카드 크기 및 에셋 404/JS 오류를 검사합니다. 내부 개발 테스트에서만 조건/적 배치를 빠르게 준비하며 프로덕션 해금/성장 수치는 바꾸지 않습니다. 미리보기: `evolution-cards-preview.png`, `evolution-combat-preview.png`.
 
 최종 검증: 단위 테스트 26개 통과, 진화/기존 무기/캐릭터/오디오/전체 플레이 Chromium 테스트 통과. 6종 진화의 이전 비주얼·투사체 정리, 모든 새 공격 특성, 패시브 보존, MAX 후보 제외 및 Retry 초기화 확인. 350마리 제어 시뮬레이션(6종 진화 동시 + 투사체 적중/연쇄 포함) update p95 약 2.1ms. SwiftShader 소프트웨어 렌더링 수치이므로 실기기 FPS 보증은 아닙니다. 빌드 성공/TypeScript 오류 없음, 기존 Phaser 번들 크기 권고 경고만 남습니다.
+
+
+## 7차 엘리트 · 보스 · 처치 보상
+
+| 게임 시간 (600초 기준) | 목표 |
+|---|---|
+| 0~2분 | 기존 일반 적 중심 성장 |
+| 2분 | 원혼 엘리트 1회 |
+| 5분 | 원귀 장군 1회 |
+| 8분 | 강화 야귀/육귀 엘리트 각 1회 |
+| 10분 | 귀왕 1회 등장, 전투 계속 |
+| 귀왕 처치 | 승리 결과 화면 |
+
+`src/encounters/encounterConfig.ts`의 ENCOUNTERS는 한 판 길이(BALANCE.duration)의 20% / 50% / 80% / 100%를 사용합니다. elapsed가 한 번에 여러 문턱을 지나도 각 encounter는 한 번만 발생합니다. 일시정지/카드 선택 중에는 게임 시간과 패턴 시간이 멈추며 새 run에서는 기록을 초기화합니다. 일반 적 풀 부족 시 엘리트를 재시도합니다. 보스 2개는 별도로 예약된 Enemy 기반 객체여서 풀이 꽉 차도 보스는 등장합니다.
+
+### 추가 파일과 연결
+
+- `src/encounters/encounterConfig.ts`: 시점 비율, 엘리트 3종, 보스 HP/속도/공격력/패턴/Phase, 일반 스폰 배수, 소환/투사체/아이템 한도, 보상 수치.
+- `EncounterManager.ts`: 현재 run의 triggeredEncounterIds와 시간 기반 등장.
+- `EliteManager.ts`: 기존 grunt/runner/tank 확대, HP·피해·속도 강화, 오라와 표식, 큰 혼백과 회복 부적 드롭.
+- `spawnPoint.ts`: 플레이어에서 약 860px 떨어진 카메라 바깥 월드 안 좌표 선택.
+- `src/bosses/Boss.ts`: 기존 Enemy 충돌/피해/타깃 경로를 그대로 공유하는 보스.
+- `BossManager.ts`: 추적, 고정 공격 예고 위치/방향, 발동, 투사체/귀문 풀, Phase, 소환 한도와 수명.
+- `BossRewardManager.ts`: 특별 카드 3개 생성과 한 번만 선택 가능한 적용. 보스 객체나 UI에 의존하지 않음.
+- `bossTextures.ts`: 작은 픽셀 갑주/관모/붉은 눈/인장/혼백 실루엣 및 회복 부적·귀문·혼령탄 생성. 텍스처는 최초 생성 후 Retry에서 재사용.
+- `src/ui/BossHud.ts`, `EncounterAnnouncement.ts`: 기존 HUD 아래 보스 이름·HP %, 짧은 등장/Phase 문구와 먹빛 강조.
+- `UpgradePanel.ts`: 기존 카드에 금색 테두리·보스 보상 배지·특별 제목 모드 추가.
+- `GameScene.ts`, `GameOverScene.ts`: 연결/보상 대기열/실제 귀왕 처치 승리, 사용 인물·진화 무기·보스/엘리트 통계 표시.
+- `Enemy.ts`, `Pool.ts`, `EnemySpawnSystem.ts`, `RosaryWeapon.ts`: 보스 예약 객체를 일반 풀에서 제외, 큰 적의 실제 반경 사용, 보스 중 스폰 속도 배수.
+- `CharacterUnlockManager.ts`: 버전1 세이브에 검증된 bossKills 통계 추가. 기존 세이브 호환 및 해금 조건 유지.
+- 한/영 i18n, `tests/encounters.test.ts`, `tests/bosses-browser.mjs`, package scripts 추가. 기존 시간 승리 테스트는 귀왕 출현/처치 흐름으로 갱신.
+
+### 패턴과 보상
+
+원귀 장군: HP 10,000. 접근 → 0.75초 부채꼴 횡베기 예고 → 피해 판정. 약 11초마다 원혼 4마리 소환.
+귀왕: HP 110,000. 플레이어 위치에 0.95초 원형 공격 예고, 0.7초 방향 예고 후 느린 혼령탄 8방향, 주기적인 귀문 2개. HP 50% 이하에서 패턴 간격 1/1.28로 감소하고 오라 강화. 강한 공격은 표시 당시의 위치/방향을 고정하여 피할 수 있습니다.
+
+보스와 일반 적은 동일 WeaponSystem 대상입니다. 기본/진화 12종 모두 공격 가능하며 보스에게 강제 우선 조준하지 않습니다. 현재 무기에는 밀어내기 로직이 없으므로 보스도 반복적으로 밀리지 않습니다. 보스 중에는 기존 일반 적 생성 빈도를 0.6배로 낮추고, 보스가 없으면 복구합니다. 최종 전투 중 일반 적 수치의 시간 증가분은 기존 600초 수준으로 유지합니다.
+
+엘리트: 기존 HP의 6~9배, 크기 1.3~1.4배. 기본 혼백의 12~16배(강화 엘리트는 추가 배수), 25% 확률로 최대 HP 20% 회복 부적을 드롭합니다. 부적을 실제 접촉하여 획득하며 35초 후 사라집니다.
+원귀 장군 보상: 보유/강화 가능 무기 +1단계, 최대 HP 40% 회복, run 공격력 +10%, 현재 레벨 요구량의 1.5배 혼백, 가능할 경우 진화 중 카드 3개를 제시합니다. 진화 후보가 있으면 1장을 보장하며 나머지는 중복 없이 선택합니다. Lv5/MAX 무기는 강화 후보에서 제외합니다. 모두 MAX이고 회복이 필요 없더라도 공격력/혼백 보상은 유효합니다. 보상 혼백으로 발생한 일반 레벨업은 선택 후 순서대로 처리합니다.
+귀왕 처치: 추가 보상 카드 없이 승리. 10분에 자동 종료하지 않으며 결과 생존 시간은 최종 전투까지 포함합니다. Retry는 선택 캐릭터의 기본 무기 Lv1, 시간/보스/패턴/HP Bar/encounter/보상 기록을 새로 시작합니다.
+
+새 BGM/SFX 파일은 추가하지 않습니다. 기존 BGM 유지, 등장·보상·승리에는 level-up 계열, 피격/사망에는 기존 공통 효과음 사용. 기존 mute/재생 제한/Retry 중복 방지 유지.
+
+### 통계, 개발 지원, 성능
+
+현재 run: `eliteKills`, `bossKills`, `bossesDefeated`, `victory`. 영구 저장: 기존 `survivor-protocol.progress`에 `bossKills: { 'vengeful-general': number, 'ghost-king': number }`. 새 해금/업적/영구 능력치 기능은 추가하지 않았습니다.
+
+개발 모드에서만 기존 게임 접근 도구로 테스트할 수 있습니다:
+
+```js
+const scene = window.__SURVIVOR_GAME__.scene.getScene('Game')
+scene.bosses.spawnBoss('vengeful-general')
+scene.bosses.spawnBoss('ghost-king')
+```
+
+Production 버튼/디버그 도구는 없습니다. 공격 예고 Graphics 1개, 혼령탄 이미지 32개, 귀문 3개, 회복 부적 8개 재사용. 보스 소환 적은 세대 번호로 추적해 동시에 16마리로 제한합니다. 같은 run의 보스를 중복 생성하지 않으며 사망 시 공격 예고/해당 투사체/귀문을 정리합니다. 기존 투사체·혼백·입자 풀과 두 Arcade overlap을 유지합니다. 카드 숫자 키 선택은 짧은 입력이 낮은 FPS에서 누락되거나 다음 카드를 연속 선택하지 않도록 키 이벤트로 처리합니다.
+
+### 최종 검증
+
+```bash
+npm test
+npm run build
+npm run test:bosses
+npm run test:weapons
+npm run test:evolution
+npm run test:characters
+npm run test:audio
+npm run test:browser
+```
+
+- 단위 테스트 33개 통과. timeline 경계/중복/비율/지연 재시도, 안전한 등장 위치, 예약 객체 풀, 스폰 배수, 보상/진화/한 번 선택, 세이브 통계 검증.
+- Chromium 보스 테스트: 엘리트 3종과 혼백/회복 드롭·흡수, 원귀 장군 횡베기 예고/회피/피해/소환, 보스 체력바 숨김, 실제 보상 카드 선택/일시정지/재개 확인.
+- 귀왕 원형 파동·혼령탄·귀문·Phase2, 12종 무기 피해, 타이머만으로 승리하지 않음, 실제 귀왕 처치 승리, 11분 이후 결과 시간, KO/EN 카드·결과 글자 크기, 사망/승리 후 Retry 초기화 확인.
+- 보상 혼백 → 일반 레벨업 → 선택 → 재개 및 5ms 짧은 숫자 키 입력이 한 장만 선택함 확인.
+- 기준 빌드의 10초 고정 표적 무기 피해 시뮬레이션: 일반 6무기 Lv3 + 기본 강화 기준 원귀 장군 DPS 413, 예상 24초. 6무기 Lv5 중 3진화 + 추가 강화 기준 귀왕 DPS 1,712, 예상 64초. 회피·일반 적 조준 경쟁·이동 없는 참고치이며 실제 한 판 전투시간 보장은 아닙니다.
+- 일반 적 350마리 + 귀왕 Phase2/소환 상황에서 추가 보스·엘리트·HP UI update p95 약 0.1ms. 기존 6무기 350마리 실전 테스트도 통과. SwiftShader 소프트웨어 렌더링 기준이며 실기기 FPS를 보증하지 않습니다.
+- 기존 무기/진화/캐릭터/오디오/전체 플레이 브라우저 테스트 통과. 오디오 9개 정상, BGM loop·mute·Retry 중복 방지, 누락 파일 내성 확인.
+- TypeScript 오류 없이 build 성공. Phaser 포함 JS 1.59MB / gzip 약 375KB의 기존 청크 크기 권고 경고만 있습니다.
+- 미리보기: `boss-general-preview.png`, `boss-king-preview.png`, `boss-reward-preview.png`, `boss-victory-preview.png`.
+
+이 결과는 작업 환경 프로젝트 사본이며 Windows 폴더/GitHub/Cloudflare에는 직접 반영하지 않았습니다. Cloudflare Pages에서는 기존대로 `npm run build` / 출력 `dist`를 사용합니다.

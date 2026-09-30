@@ -12,7 +12,8 @@
     "test:audio": "node tests/audio-browser.mjs",
     "test:weapons": "node tests/weapons-browser.mjs",
     "test:characters": "node tests/characters-browser.mjs",
-    "test:evolution": "node tests/evolution-browser.mjs"
+    "test:evolution": "node tests/evolution-browser.mjs",
+    "test:bosses": "node tests/bosses-browser.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0"

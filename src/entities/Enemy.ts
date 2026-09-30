@@ -1,6 +1,10 @@
 import Phaser from "phaser";
 import { ENEMIES, type EnemyKind } from "../data/enemies";
 export class Enemy extends Phaser.Physics.Arcade.Sprite {
+  rank: "normal" | "elite" | "boss" = "normal";
+  eliteId?: import("../encounters/encounterConfig").EliteId;
+  maxHp = 0;
+  collisionRadius = 15;
   hp = 0;
   speed = 0;
   damage = 0;
@@ -23,11 +27,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     speedScale: number,
   ) {
     const d = ENEMIES[kind];
+    this.rank="normal";this.eliteId=undefined;this.setScale(1);this.collisionRadius=d.radius;
     this.kind = kind;
     this.setTexture(kind);
     this.enableBody(true, x, y, true, true);
     this.setCircle(d.radius, 32 - d.radius, 32 - d.radius);
-    this.hp = d.hp * hpScale;
+    this.hp = this.maxHp = d.hp * hpScale;
     this.speed = d.speed * speedScale;
     this.damage = d.damage;
     this.xp = d.xp;

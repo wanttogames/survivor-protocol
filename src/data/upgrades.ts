@@ -5,6 +5,7 @@ export type Rarity = "Common" | "Rare" | "Epic";
 export interface UpgradeDefinition {
   id: string;
   evolutionId?: string;
+  bossRewardId?: 'heal'|'damage'|'souls'|'weapon';
   weaponId?: WeaponId;
   nameKey: TranslationKey;
   descriptionKey: TranslationKey;

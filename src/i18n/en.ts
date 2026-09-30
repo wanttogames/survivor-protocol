@@ -1,4 +1,44 @@
 export const en = {
+  boss: {
+    "general": {
+      "name": "Vengeful General"
+    },
+    "king": {
+      "name": "Ghost King"
+    },
+    "appear": "{name} emerges",
+    "phase": "{name} · spirit rage",
+    "elite": "An elite spirit awakens",
+    "defeated": "{name} defeated",
+    "hp": "HP {value}%"
+  },
+  bossReward: {
+    "title": "Claim the seal’s power",
+    "guide": "Choose one reward to continue the battle",
+    "badge": "BOSS REWARD",
+    "runOnly": "Applies to this run",
+    "instant": "Applies immediately",
+    "heal": {
+      "name": "Protective Breath",
+      "description": "Restore {value}% of maximum HP"
+    },
+    "damage": {
+      "name": "General’s Secret Art",
+      "description": "All attack damage +{value}%"
+    },
+    "souls": {
+      "name": "Condensed Souls",
+      "description": "Immediately gain {value} souls"
+    }
+  },
+  result: {
+    "character": "Character · {name}",
+    "evolved": "Evolutions · {names}",
+    "bosses": "Bosses defeated · {names}",
+    "none": "None",
+    "elites": "Elites defeated · {count}"
+  },
+
   evolution: {
     "thunder-talisman": {
       "name": "Thunder Talisman",
@@ -98,7 +138,7 @@ export const en = {
     play: "BEGIN",
     moveGuide: "MOVE   WASD / ARROW KEYS",
     autoAttack: "AUTO ATTACK ENABLED   •   ESC TO PAUSE",
-    sector: "{character} · {weapon}\nTEN MINUTES UNTIL DAWN",
+    sector: "{character} · {weapon}\nSEAL THE GHOST KING",
   },
   hud: {
     characterBuild:"{character}   /   {critical}% CRITICAL",
@@ -126,9 +166,9 @@ export const en = {
     controls: "1 / 2 / 3  OR CLICK A CARD    •    RESTING",
   },
   gameOver: {
-    won: "DAWN HAS COME",
+    won: "VICTORY",
     lost: "YOUR STRENGTH HAS FADED",
-    wonMessage: "You endured the long night.",
+    wonMessage: "The Ghost King is sealed.",
     lostMessage: "The haunted night is not over.",
     time: "SURVIVAL TIME",
     level: "LEVEL REACHED",
