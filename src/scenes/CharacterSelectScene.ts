@@ -31,7 +31,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         text(x + 78, y + 21, () => t(c.nameKey), 21, '#e1ddd0');
         text(x + 78, y + 52, () => t(selected ? 'character.select.selected' : open ? 'character.select.available' : 'character.select.locked'), 11, open ? '#b8a16a' : '#b86d59');
         text(x + 20, y + 83, () => t(c.descriptionKey), 12).setWordWrapWidth(328);
-        text(x + 20, y + 126, () => t('character.select.weapon', { name: t(WEAPONS[c.startingWeaponId].nameKey) }), 13, '#d0b980');
+        text(x + 20, y + 126, () => t('character.select.weapon', { name: t(WEAPONS[c.startingWeaponId].nameKey) }), 12, '#d0b980').setWordWrapWidth(330);
         text(x + 20, y + 150, () => t('character.select.passive', { value: t(c.passiveKey) }), 12, '#9ebfc0').setWordWrapWidth(330);
         if (open) {
             box.setInteractive({ useHandCursor: true });
@@ -40,8 +40,8 @@ export class CharacterSelectScene extends Phaser.Scene {
             text(x + 20, y + 222, () => t(selected ? 'character.select.selected' : 'character.select.choose'), 13, '#d0b980');
         }
         else {
-            const params: TranslationParams = c.unlock.type === 'default' ? {} : { target: c.unlock.type === 'survival' ? timeLabel(c.unlock.target) : c.unlock.target, weapon: c.unlock.type === 'weaponLevel' || c.unlock.type === 'weaponKills' ? t(WEAPONS[c.unlock.weaponId].nameKey) : '' };
-            text(x + 20, y + 185, () => t(c.unlockKey, params), 12, '#bfa18b').setWordWrapWidth(330);
+            const params = (): TranslationParams => c.unlock.type === 'default' ? {} : { target: c.unlock.type === 'survival' ? timeLabel(c.unlock.target) : c.unlock.target, weapon: c.unlock.type === 'weaponLevel' || c.unlock.type === 'weaponKills' ? t(WEAPONS[c.unlock.weaponId].nameKey) : '' };
+            text(x + 20, y + 185, () => t(c.unlockKey, params()), 12, '#bfa18b').setWordWrapWidth(330);
             const target = c.unlock.type === 'default' ? 1 : c.unlock.target;
             text(x + 20, y + 222, () => t('character.select.progress', { current: c.unlock.type === 'survival' ? timeLabel(Math.min(target, unlocks.value(c))) : Math.min(target, Math.floor(unlocks.value(c))), target: c.unlock.type === 'survival' ? timeLabel(target) : target }), 12, '#938e81');
             // A small drawn lock avoids font-dependent icon glyphs.

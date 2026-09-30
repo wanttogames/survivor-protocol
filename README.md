@@ -98,13 +98,13 @@ node tests/browser-smoke.mjs
 
 온라인 저장이나 영구 성장은 핵심 전투 밸런스가 검증된 후 추가합니다.
 
-## 한국어 기본 / 다국어 확장
+## 한국어 / 영어 자동 감지 및 선택
 
-기본 언어는 브라우저 설정과 무관하게 항상 `ko`입니다.
+언어는 저장된 사용자 선택 → 브라우저 `ko`/`ko-*`면 한국어 → 그 외/판정 실패는 영어 순서로 결정합니다. 자동 감지는 사용자 선택을 저장하지 않습니다.
 
 - `src/i18n/ko.ts`: 한국어 사전
 - `src/i18n/en.ts`: 영어 사전 및 사전 타입
-- `src/i18n/index.ts`: `DEFAULT_LOCALE`, `t`, `setLocale`, `getLocale`, `onLocaleChange`, 폰트 설정
+- `src/i18n/index.ts`: `DEFAULT_LOCALE`(en), `detectLocale`, `initLocale`, `t`, `setLocale`, `getLocale`, `onLocaleChange`, 폰트 설정
 
 ```ts
 import { t, setLocale } from './i18n';
@@ -115,7 +115,7 @@ const text = t('hud.level', { level: 5 });
 
 메뉴·버튼·카드의 번역 레이블은 언어 변경 이벤트로 갱신됩니다. 전투 HUD의 동적 수치는 다음 전투 프레임에서 갱신됩니다.
 번역 이벤트 구독은 텍스트 객체 파괴 시 해제됩니다. 언어 변경으로 Scene이나 전투를 재시작하지 않습니다.
-언어 선택 UI, 브라우저 언어 감지, localStorage 저장은 아직 추가하지 않았습니다.
+메인 메뉴 오른쪽 위의 한국어/English 버튼에서 즉시 변경합니다. 선택한 언어에는 대괄호와 테두리가 표시됩니다. 직접 선택은 `survivor-protocol.locale`에 저장하며 진행도·선택 인물·오디오 설정은 유지합니다. localStorage 접근이 차단되면 저장 없이 현재 세션에서 변경할 수 있습니다.
 
 카드 데이터는 `nameKey`, `descriptionKey`, `descriptionParams`를 사용합니다.
 설명에 표시할 실제 수치는 설정과 희귀도 배수에서 계산하고 `{value}`로 삽입합니다.
@@ -145,7 +145,7 @@ Canvas와 CSS 모두 Pretendard → Noto Sans KR → Malgun Gothic → Apple SD 
 - 희귀도: 일반 / 희귀 / 영웅 (기존 내부 ID 유지)
 - `src/theme/palette.ts`: 테마 팔레트
 - `src/theme/ornaments.ts`: 메뉴 배경, 테두리, 창작 추상 부적 문양
-- `src/i18n/ko.ts`, `en.ts`: 한영 테마 문구. 기본 언어는 계속 한국어
+- `src/i18n/ko.ts`, `en.ts`: 한영 테마 문구. 한국어 브라우저 기본 언어는 한국어
 
 이동·공격·AI·스폰·경험치·레벨업·효과량·충돌·HP·종료 판정은 변경하지 않았습니다.
 `systems/*`, `config/balance.ts`, 업그레이드 효과 데이터는 이전 버전과 동일합니다.
@@ -501,3 +501,32 @@ npm run test:browser
 검증: `npm test`(37개), `npm run test:collision`, `npm run test:bosses`, `npm run test:browser`, `npm run build`. 충돌 브라우저 테스트는 실제 Arcade step/키 입력, 정면 차단, 대각선 모서리 이동, 분할 돌담 경계 이동, 지붕/작은 장식 통과, 두 보스/적/투사체 통과, 혼백/회복 획득, 스폰 안전성, Retry 중복 방지를 확인합니다.
 
 테스트 환경은 Chromium/SwiftShader이며 Windows 실제 장치의 FPS 검증은 별도입니다. Windows 프로젝트나 Git에 직접 적용한 것이 아니라 기존 프로젝트 사본을 수정한 업데이트 파일입니다.
+
+
+## 10차 한국어/영어 선택 및 자동 감지
+
+- 기존 `src/i18n/{ko,en,index}.ts`를 확장했습니다. `Locale`은 ko/en이며 key 타입과 사전/placeholder 동기화 테스트를 유지합니다. 대형 라이브러리와 외부 폰트를 추가하지 않습니다.
+- 시작 시 `initLocale()` → 저장된 `survivor-protocol.locale`(ko/en) → `navigator.language`가 ko/ko-*이면 ko → 나머지/판정 실패는 en 순서로 적용합니다. 잘못된 저장 값은 무시합니다. 자동 감지는 설정을 저장하지 않습니다.
+- 메인 메뉴 오른쪽 위 한국어/English 버튼은 현재 선택을 대괄호와 테두리로 표시합니다. 클릭 시 현재 Scene/페이지 재시작 없이 문자열과 문서 lang/title/description을 즉시 갱신합니다. 직접 선택은 localStorage에 저장합니다.
+- Storage 읽기/쓰기 및 navigator 접근 실패는 예외를 잡습니다. iframe 등에서 저장이 차단되면 현재 세션의 언어 선택은 정상 동작하지만 새로 접속할 때 저장된 선택을 복구할 수 없습니다.
+- 진행도, 캐릭터 해금, 선택 캐릭터, 오디오 설정은 별도 저장 키로 유지합니다. 언어 선택으로 초기화하지 않습니다.
+- 기본/진화 무기 12종과 강화 명칭을 영어 게임 용어로 정리하고 HUD를 짧게 표시했습니다. 캐릭터 6종/조건/진행도, 메뉴, 카드/보상, 보스, 맵, 결과/알림, 오디오 문구를 기존 키로 관리합니다. 코드 ID/밸런스/충돌/음원은 그대로 유지합니다.
+- 캐릭터 해금 조건의 무기명을 locale 변경 시 다시 계산합니다. 긴 영어 진화 무기명은 카드 제목 크기로 대응하고, 결과 화면의 진화 목록/버튼/해금 알림 간격을 조정했습니다.
+- 번역은 현재 사전 → 영어 → key 순서로 fallback합니다. 누락 경고는 개발 환경에서 key/locale별 한 번만 표시하며 Production에서 출력하지 않습니다.
+- 사용자에게 보이는 Text 생성 경로와 한글 하드코딩을 검색했습니다. UI 문구는 사전 키를 사용하며 숫자/기호/ID/디버그 문자열은 유지합니다. 언어 버튼의 언어 이름은 다른 언어에서도 모국어 표기를 사용합니다.
+
+검증 결과:
+
+```bash
+npm test               # 40/40
+npm run test:locale    # PASS
+npm run test:evolution # PASS
+npm run test:characters # PASS
+npm run test:bosses    # PASS
+npm run test:browser   # PASS
+npm run build          # PASS
+```
+
+Chromium에서 ko/ko-KR/en-US/ja-JP/de-DE 첫 실행, 저장 locale 우선, 잘못된 저장 값, 실제 버튼 클릭/즉시 변경/재접속 유지, 설정 보존, Storage 차단을 확인했습니다. 한·영 각각 메뉴/캐릭터/해금 조건/HUD/맵/기본 무기 30단계/모든 강화 카드/진화 6종/보스/보상/승리/패배/해금 알림/음소거/Retry를 점검했습니다. 전체 진화 6개와 해금 5개를 표시해도 결과 화면이 겹치지 않습니다. 번역 누락 경고/페이지 예외가 없었습니다. 390×844 화면의 canvas bounds도 확인했습니다.
+
+실제 itch.io 업로드/사이트 iframe 및 Windows 기기 테스트는 수행하지 않았습니다. Storage 차단은 브라우저에서 SecurityError를 주입해 검증했습니다. 빌드에는 기존 Phaser 대형 청크 권고 경고만 있습니다.

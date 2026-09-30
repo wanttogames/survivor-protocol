@@ -3,6 +3,7 @@ import { WEAPONS } from "../data/weaponConfig";
 import { AudioManager } from "../audio/AudioManager";
 import { addAudioControls } from "../audio/audioControls";
 import Phaser from "phaser";
+import { addLanguageSelector } from "../ui/LanguageSelector";
 import { t } from "../i18n";
 import { label, button } from "../ui/common";
 import { nightBackdrop } from "../theme/ornaments";
@@ -16,6 +17,7 @@ export class MenuScene extends Phaser.Scene {
         AudioManager.forGame(this.game).stopBgm();
         AudioManager.forGame(this.game).stopSfx();
         nightBackdrop(this);
+        addLanguageSelector(this);
         label(this, 110, 94, () => t("menu.eyebrow"), 14, T.text.gold);
         label(this, 102, 165, () => t("menu.titleFirst"), 116, T.text.pale).setFontStyle("bold");
         label(this, 115, 320, () => t("menu.titleSecond"), 14, T.text.gold).setLetterSpacing(5);

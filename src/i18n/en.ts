@@ -1,4 +1,5 @@
 export const en = {
+  language: { label: "Language", korean: "한국어", english: "English" },
   map: { moonlitVillage: { name: "Moonlit Village", description: "An abandoned village beyond the spirit gate" } },
   boss: {
     "general": {
@@ -14,7 +15,7 @@ export const en = {
     "hp": "HP {value}%"
   },
   bossReward: {
-    "title": "Claim the seal’s power",
+    "title": "Choose Your Reward",
     "guide": "Choose one reward to continue the battle",
     "badge": "BOSS REWARD",
     "runOnly": "Applies to this run",
@@ -42,32 +43,32 @@ export const en = {
 
   evolution: {
     "thunder-talisman": {
-      "name": "Thunder Talisman",
+      "name": "Heavenly Thunder Talisman",
       "description": "Charged talismans chain lightning through nearby spirits."
     },
     "vajra-rosary": {
-      "name": "Vajra Rosary",
+      "name": "Vajra Prayer Beads",
       "description": "Six golden beads guard a wider orbit."
     },
     "soul-bell": {
-      "name": "Soul Bell",
+      "name": "Soul-Calming Bell",
       "description": "A wider shockwave is followed by a second echo."
     },
     "thunder-god-sword": {
-      "name": "Thunder God Sword",
+      "name": "Thunder God’s Sword",
       "description": "Great slashes trigger lightning explosions."
     },
     "demon-slayer-bow": {
-      "name": "Demon Slayer Bow",
+      "name": "Demon-Slaying Divine Bow",
       "description": "Four swift arrows pierce long enemy formations."
     },
     "infernal-hellfire": {
-      "name": "Infernal Hellfire",
+      "name": "Infernal Hellfire Formation",
       "description": "Three large, lasting seals burn spirits with stronger fire."
     },
     "badge": "EVOLUTION",
     "max": "MAX",
-    "requirements": "{weapon} Lv{level} + {upgrade}",
+    "requirements": "{weapon} Lv.{level} + {upgrade}",
     "announcement": "{name} · EVOLVED"
   },
   character:{
@@ -113,7 +114,7 @@ export const en = {
     "begin": "{name} · BEGIN",
     "back": "MAIN MENU",
     "progress": "Progress · {current} / {target}",
-    "unlocked": "New guardian unlocked · {names}"
+    "unlocked": "New Character Unlocked · {names}"
   },
   "unlock": {
     "default": "Unlocked by default",
@@ -136,7 +137,7 @@ export const en = {
     titleSecond: "NIGHT OF SPIRITS",
     tagline: "The seal has broken. The spirit gate is open.",
     description: "Survive until dawn.",
-    play: "BEGIN",
+    play: "Start",
     moveGuide: "MOVE   WASD / ARROW KEYS",
     autoAttack: "AUTO ATTACK ENABLED   •   ESC TO PAUSE",
     sector: "{character} · {weapon}\nSEAL THE GHOST KING",
@@ -144,11 +145,11 @@ export const en = {
   hud: {
     characterBuild:"{character}   /   {critical}% CRITICAL",
     weapons: "WEAPONS {count}/{max}",
-    hp: "VITALITY",
-    level: "LV {level}",
-    exp: "SOULS",
-    time: "SURVIVAL TIME",
-    kills: "SPIRITS BANISHED",
+    hp: "HP",
+    level: "Level {level}",
+    exp: "Souls",
+    time: "Time",
+    kills: "Kills",
     controls: "ESC  PAUSE   /   1–3  SELECT",
     waveFirst: "DUSK / WANDERING SOULS",
     waveSecond: "MIDNIGHT / OPEN GATE",
@@ -168,22 +169,22 @@ export const en = {
   },
   gameOver: {
     won: "VICTORY",
-    lost: "YOUR STRENGTH HAS FADED",
+    lost: "Game Over",
     wonMessage: "The Ghost King is sealed.",
     lostMessage: "The haunted night is not over.",
-    time: "SURVIVAL TIME",
-    level: "LEVEL REACHED",
-    kills: "SPIRITS BANISHED",
-    retry: "TRY AGAIN",
+    time: "Survival Time",
+    level: "Level Reached",
+    kills: "Kills",
+    retry: "Retry",
     mainMenu: "MAIN MENU",
   },
   rarity: { Common: "Common", Rare: "Rare", Epic: "Epic" },
   weapon: {
   "pulseNeedle": {
-    "name": "Banishing Talisman"
+    "name": "Exorcism Talisman"
   },
   "talisman": {
-    "name": "Banishing Talisman",
+    "name": "Exorcism Talisman",
     "description": "Automatically aims talismans at the nearest spirit.",
     "level1": "Cast a talisman at the nearest spirit.",
     "level2": "Base talisman power +{damagePercent}%",
@@ -192,7 +193,7 @@ export const en = {
     "level5": "Base power +{damagePercent}%\nExtra pierce: {pierce}"
   },
   "rosary": {
-    "name": "Rosary",
+    "name": "Prayer Beads",
     "description": "Orbiting beads strike spirits that approach.",
     "level1": "Summon {count} orbiting beads.",
     "level2": "Base bead damage: {damage}",
@@ -210,7 +211,7 @@ export const en = {
     "level5": "Base damage: {damage}\nRadius: {radius}"
   },
   "lightningSword": {
-    "name": "Thunderblade",
+    "name": "Thunder Sword",
     "description": "Sweep a powerful close-range arc toward a spirit.",
     "level1": "A wide slash toward a nearby spirit.",
     "level2": "Base slash damage: {damage}",
@@ -219,7 +220,7 @@ export const en = {
     "level5": "{count} crossing slashes\nBase damage: {damage}"
   },
   "ghostArrow": {
-    "name": "Spirit Arrow",
+    "name": "Spirit-Slaying Arrow",
     "description": "Fast straight arrows pierce lines of spirits.",
     "level1": "Fast straight arrow\nExtra targets pierced: {pierce}",
     "level2": "Base arrow damage: {damage}",
@@ -228,7 +229,7 @@ export const en = {
     "level5": "Base damage: {damage}\nExtra targets pierced: {pierce}"
   },
   "hellfire": {
-    "name": "Hellfire Seal",
+    "name": "Hellfire Formation",
     "description": "Place a seal near a spirit that deals periodic damage.",
     "level1": "A seal near a spirit lasts {duration}s",
     "level2": "Base damage per tick: {damage}",
@@ -245,17 +246,17 @@ export const en = {
   player: { name: "Exorcist" },
   pickup: { name: "Soul Fragment" },
   cards: {
-    power: { name: "Banishment", description: "All weapon power +{value}%" },
+    power: { name: "Exorcism Power", description: "All weapon power +{value}%" },
     rapid: {
-      name: "Swift Inscription",
+      name: "Swift Casting",
       description: "Cast speed +{value}%\nExcept bead contact",
     },
-    boots: { name: "Earth Step", description: "Movement speed +{value}%" },
+    boots: { name: "Fleet Step", description: "Movement speed +{value}%" },
     vitality: {
-      name: "Diamond Ward",
+      name: "Vajra Protection",
       description: "Max HP +{value} · restore added HP",
     },
-    recovery: { name: "Restore Vitality", description: "Restore {value} HP" },
+    recovery: { name: "Recovery", description: "Restore {value} HP" },
     multi: {
       name: "Twin Talismans",
       description: "Extra talismans / arrows +{value}",
@@ -273,7 +274,7 @@ export const en = {
       description: "Critical chance +{value}%",
     },
     pierce: {
-      name: "Piercing Charm",
+      name: "Piercing Talisman",
       description: "Pierce +{value} additional target(s)",
     },
   },

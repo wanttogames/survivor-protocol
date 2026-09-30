@@ -115,7 +115,7 @@ export class UpgradePanel {
           x,
           418,
           () => t(c.definition.nameKey),
-          evolution?19:22,
+          evolution?17:20,
           T.text.ink,
         ).setWordWrapWidth(250).setDepth(202),
       );

@@ -26,6 +26,7 @@ try {
   browser = await chromium.launch(options);
   const page = await browser.newPage({
     viewport: { width: 1280, height: 800 },
+    locale: "ko-KR",
   });
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -47,7 +48,7 @@ try {
     const { setLocale } = await import("/src/i18n/index.ts");
     setLocale("en");
   });
-  assert.ok((await texts()).includes("BEGIN"));
+  assert.ok((await texts()).includes("Start"));
   await page.evaluate(async () => {
     const { setLocale } = await import("/src/i18n/index.ts");
     setLocale("ko");

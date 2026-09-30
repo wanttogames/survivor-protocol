@@ -1,5 +1,6 @@
 import type { LocaleMessages } from "./en";
 export const ko = {
+  language: { label: "언어", korean: "한국어", english: "English" },
   map: { moonlitVillage: { name: "월하촌", description: "귀문이 열린 버려진 마을" } },
   boss: {
     "general": {
@@ -134,7 +135,7 @@ export const ko = {
   menu: {
     eyebrow: "조선의 밤 · 퇴마 생존록",
     titleFirst: "귀야",
-    titleSecond: "NIGHT OF SPIRITS",
+    titleSecond: "GUIYA",
     tagline: "봉인이 무너진 밤, 귀문이 열렸다.",
     description: "새벽까지 살아남아라.",
     play: "시작",
