@@ -6,6 +6,7 @@ import { BALANCE, type PlayerStats } from "../config/balance";
 export class Player extends Phaser.Physics.Arcade.Sprite {
     stats: PlayerStats = { ...BALANCE.player };
     invulnerable = 0;
+    bossDamageMultiplier = 1;
     private walkTime = 0;
     private adornment: Phaser.GameObjects.Graphics;
     constructor(scene: Phaser.Scene, readonly character: CharacterDefinition = characterById("exorcist")) {

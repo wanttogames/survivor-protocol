@@ -44,7 +44,7 @@ export class Hud {
     );
   }
   update(p: Player, l: LevelSystem, elapsed: number, kills: number) {
-    this.hp.setText(`${Math.ceil(p.stats.hp)} / ${p.stats.maxHp}`);
+    this.hp.setText(`${Math.ceil(p.stats.hp)} / ${Math.ceil(p.stats.maxHp)}`);
     this.lv.setText(
       t("hud.level", { level: String(l.level).padStart(2, "0") }),
     );

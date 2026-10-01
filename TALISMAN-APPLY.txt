@@ -1,0 +1,14 @@
+﻿직접 덮어쓰기용 묶음입니다. 이 ZIP에는 payload 폴더가 없습니다.
+
+1. 압축을 별도 폴더에 풉니다.
+2. 압축을 푼 폴더 안의 src, tests, package.json을 C:\work\survivor-protocol 안으로 복사합니다.
+3. 기존 파일을 교체합니다. Windows 폴더의 별도 변경사항은 먼저 백업하세요.
+4. 개발 서버를 종료하고 해당 프로젝트에서 npm run dev로 다시 실행합니다.
+5. 화면 상단 생존 시간이 02:00에 도달하면 첫 부적 선택창이 뜹니다. 정지/레벨업 선택 시간은 생존 시간에 포함되지 않습니다.
+6. 배포 사이트에서 확인한다면 npm run build 후 새 dist를 배포해야 합니다. 로컬 소스만 바꾸면 배포 사이트는 바뀌지 않습니다.
+
+적용된 파일 확인:
+C:\work\survivor-protocol\src\talismans\talismanConfig.ts
+C:\work\survivor-protocol\src\scenes\GameScene.ts 안에 this.talismans.update(this.elapsed) 호출이 있어야 합니다.
+
+원래 부적 구현 코드는 동일합니다. 이번 ZIP은 수동 덮어쓰기 시 경로 혼동을 피하기 위한 재포장입니다.

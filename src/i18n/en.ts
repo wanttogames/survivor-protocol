@@ -1,4 +1,12 @@
 export const en = {
+  talisman: {
+    title: 'CURSED TALISMAN · A DANGEROUS PACT', risk: 'Risk {stars}', curses: 'Curse', rewards: 'Power in Return',
+    guide: 'This run only · 1 Accept / 2 Reject', accept: 'Accept the Talisman', reject: 'Burn It',
+    accepted: 'Accepted {name}', rejected: 'The talisman was burned', hud: 'Talismans  {symbols}', result: 'Talismans acquired: {names}',
+    names: {samdo:'Talisman of the Three Crossings',gate:'Talisman of the Spirit Gate',hunger:'Talisman of the Hungry Soul',trick:'Dokkaebi’s Trick',reaper:'The Reaper’s Pact',moon:'Talisman of the Red Moon'},
+    effects: {enemyMaxCountMultiplier:'Maximum enemies +{value}%',enemyMoveSpeedMultiplier:'Enemy movement speed +{value}%',enemyDamageMultiplier:'Enemy damage +{value}%',enemyHpMultiplier:'Enemy maximum HP +{value}%',xpMultiplier:'XP gained +{value}%',playerDamageMultiplier:'All damage +{value}%',playerMoveSpeedMultiplier:'Movement speed +{value}%',attackSpeedMultiplier:'Attack speed +{value}%',bossDamageMultiplier:'Damage to bosses +{value}%',playerMaxHpMultiplier:'Maximum HP {value}%',eliteRewardMultiplier:'Elite XP +{value}% (stacks with XP bonus)',upgradeRarityBonus:'Stat cards: Rare +{rare}pp / Epic +{epic}pp',extraEliteCount:'Future elite encounters: +{value} elite'},
+  },
+
   language: { label: "Language", korean: "한국어", english: "English" },
   map: { moonlitVillage: { name: "Moonlit Village", description: "An abandoned village beyond the spirit gate" } },
   boss: {

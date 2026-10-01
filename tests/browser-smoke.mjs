@@ -174,6 +174,7 @@ try {
   await page.keyboard.press("Escape", { delay: 100 });
   await page.evaluate(() => {
     const s = window.__SURVIVOR_GAME__.scene.getScene("Game");
+    s.talismans.times = []; // Modal timeline is covered by talismans-browser.
     s.elapsed = 305;
     s.player.stats.hp = 100;
     s.player.invulnerable = 10;
@@ -220,14 +221,14 @@ try {
     100,
   );
   await page.evaluate(
-    () => (window.__SURVIVOR_GAME__.scene.getScene("Game").elapsed = 599.98),
+    () => { const s=window.__SURVIVOR_GAME__.scene.getScene("Game"); s.talismans.times=[]; s.elapsed=599.98; },
   );
   await page.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.getScene('Game').bosses.spawnedIds.has('ghost-king'));
   await page.evaluate(()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');s.levels.pending=0;s.panel.close();for(const e of s.enemies.items)if(e.active&&e.rank==='boss'&&e.definition.id==='ghost-king')s.weapons.strike(e,1000000,'arc-bolt');s.paused=false;s.physics.resume();});
   await page.waitForFunction(() =>
     window.__SURVIVOR_GAME__.scene.isActive("GameOver"),
   );
-  await page.mouse.click(640, 593);
+  await page.mouse.click(640, 649);
   await page.waitForFunction(() =>
     window.__SURVIVOR_GAME__.scene.isActive("Menu"),
   );

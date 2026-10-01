@@ -1,5 +1,13 @@
 import type { LocaleMessages } from "./en";
 export const ko = {
+  talisman: {
+    title: '저주받은 부적 · 위험한 계약', risk: '위험도 {stars}', curses: '저주', rewards: '대가로 얻는 힘',
+    guide: '이 계약은 이번 판에만 적용됩니다 · 1 수락 / 2 거절', accept: '부적을 받는다', reject: '태워버린다',
+    accepted: '{name}을 받아들였습니다', rejected: '부적을 태워버렸습니다', hud: '부적  {symbols}', result: '획득한 부적: {names}',
+    names: {samdo:'삼도천의 부적',gate:'귀문의 부적',hunger:'굶주린 혼의 부적',trick:'도깨비의 장난',reaper:'저승사자의 계약',moon:'붉은 달의 부적'},
+    effects: {enemyMaxCountMultiplier:'최대 적 수 +{value}%',enemyMoveSpeedMultiplier:'적 이동속도 +{value}%',enemyDamageMultiplier:'적 공격력 +{value}%',enemyHpMultiplier:'적 최대 체력 +{value}%',xpMultiplier:'경험치 획득량 +{value}%',playerDamageMultiplier:'모든 피해량 +{value}%',playerMoveSpeedMultiplier:'이동속도 +{value}%',attackSpeedMultiplier:'공격속도 +{value}%',bossDamageMultiplier:'보스 피해량 +{value}%',playerMaxHpMultiplier:'최대 체력 {value}%',eliteRewardMultiplier:'엘리트 경험치 +{value}% (경험치 보너스와 중첩)',upgradeRarityBonus:'능력 카드 확률: 희귀 +{rare}%p / 영웅 +{epic}%p',extraEliteCount:'이후 엘리트 등장마다 +{value}마리'},
+  },
+
   language: { label: "언어", korean: "한국어", english: "English" },
   map: { moonlitVillage: { name: "월하촌", description: "귀문이 열린 버려진 마을" } },
   boss: {

@@ -1,5 +1,7 @@
 import Phaser from "phaser";
 import { ENEMIES, type EnemyKind } from "../data/enemies";
+import { neutralModifiers, type TalismanModifiers } from "../talismans/talismanDefinitions";
+const NEUTRAL = neutralModifiers();
 export class Enemy extends Phaser.Physics.Arcade.Sprite {
   rank: "normal" | "elite" | "boss" = "normal";
   eliteId?: import("../encounters/encounterConfig").EliteId;
@@ -12,7 +14,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   generation = 0;
   flash = 0;
   kind: EnemyKind = "grunt";
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, readonly curseModifiers: () => TalismanModifiers = () => NEUTRAL) {
     super(scene, 0, 0, "grunt");
     scene.add.existing(this);
     scene.physics.add.existing(this);
@@ -32,9 +34,9 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.setTexture(kind);
     this.enableBody(true, x, y, true, true);
     this.setCircle(d.radius, 32 - d.radius, 32 - d.radius);
-    this.hp = this.maxHp = d.hp * hpScale;
-    this.speed = d.speed * speedScale;
-    this.damage = d.damage;
+    this.hp = this.maxHp = d.hp * hpScale * this.curseModifiers().enemyHpMultiplier;
+    this.speed = d.speed * speedScale * this.curseModifiers().enemyMoveSpeedMultiplier;
+    this.damage = d.damage * this.curseModifiers().enemyDamageMultiplier;
     this.xp = d.xp;
     this.generation++;
     this.flash = 0;

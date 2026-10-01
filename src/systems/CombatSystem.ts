@@ -7,6 +7,7 @@ import type { Pool } from "../utils/Pool";
 import { WEAPON_RULES, type WeaponStats } from "../data/weaponConfig";
 export class CombatSystem {
     private cooldown = 0;
+    lastDamage = 0;
     constructor(private player: Player, private enemies: Pool<Enemy>, private bolts: Pool<Projectile>, private onShot: () => void = () => { }, private target?: (range: number) => Enemy | undefined, private weaponStats?: () => WeaponStats, private onProjectile?: (b:Projectile)=>void) { }
     update(dt: number) {
         this.cooldown -= dt;
@@ -49,7 +50,8 @@ export class CombatSystem {
         if (!b.active || !e.active || b.hits.get(e) === e.generation)
             return false;
         b.hits.set(e, e.generation);
-        e.hp -= b.damage;
+        this.lastDamage = b.damage * (e.rank === "boss" ? this.player.bossDamageMultiplier : 1);
+        e.hp -= this.lastDamage;
         e.setTintFill(0xffffff);
         e.flash = 0.07;
         if (b.pierce-- <= 0)

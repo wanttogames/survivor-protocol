@@ -16,7 +16,8 @@
     "test:bosses": "node tests/bosses-browser.mjs",
     "test:map": "node tests/maps-browser.mjs",
     "test:collision": "node tests/map-collision-browser.mjs",
-    "test:locale": "node tests/locale-browser.mjs"
+    "test:locale": "node tests/locale-browser.mjs",
+    "test:talismans": "node tests/talismans-browser.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0"

@@ -100,7 +100,7 @@ export class WeaponSystem {
         if (!e.active)
             return;
         const crit = Math.random() < this.player.stats.criticalChance;
-        const value = base * this.player.stats.damage / BALANCE.player.damage * (crit ? BALANCE.criticalMultiplier : 1);
+        const value = base * this.player.stats.damage / BALANCE.player.damage * (crit ? BALANCE.criticalMultiplier : 1) * (e.rank === "boss" ? this.player.bossDamageMultiplier : 1);
         e.hp -= value;
         e.setTintFill(0xffffff);
         e.flash = .07;
@@ -112,7 +112,7 @@ export class WeaponSystem {
             return false;
         this.hits[b.source] = (this.hits[b.source] ?? 0) + 1;
         const x = e.x, y = e.y;
-        this.onDamage(e, b.damage, b.critical, b.source);
+        this.onDamage(e, this.collision.lastDamage, b.critical, b.source);
         if (b.source === 'thunder-talisman') {
             // Bounded nearest hops. Secondary strikes do not recursively trigger chains.
             let cx = x, cy = y;

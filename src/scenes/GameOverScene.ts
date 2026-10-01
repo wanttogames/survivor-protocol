@@ -1,3 +1,4 @@
+import { TALISMANS } from '../talismans/talismanDefinitions';
 import { BOSSES, type BossId } from '../encounters/encounterConfig';
 import { WEAPONS, type WeaponId } from '../data/weaponConfig';
 import { characterById } from "../characters/characterDefinitions";
@@ -9,6 +10,8 @@ import { t } from "../i18n";
 import Phaser from "phaser";
 import { label, button, timeLabel } from "../ui/common";
 export interface RunResult {
+    talismanIds?: string[];
+    rejectedTalismanIds?: string[];
     time: number;
     level: number;
     kills: number;
@@ -44,10 +47,11 @@ export class GameOverScene extends Phaser.Scene {
         });
         const details = [() => t('result.character', { name: t(characterById(result.characterId ?? 'exorcist').nameKey) }), () => t('result.evolved', { names: result.evolvedWeapons?.length ? result.evolvedWeapons.map(id => t(WEAPONS[id].nameKey)).join(' · ') : t('result.none') }), () => t('result.bosses', { names: result.bossesDefeated?.length ? result.bossesDefeated.map(id => t(BOSSES[id].nameKey)).join(' · ') : t('result.none') }) + '   ' + t('result.elites', { count: result.eliteKills ?? 0 })];
         details.forEach((text, i) => label(this, 640, 437 + i * 29, text, 12, '#c8b993').setOrigin(.5).setWordWrapWidth(850).setAlign('center'));
+        label(this,640,524,()=>t('talisman.result',{names:result.talismanIds?.length?result.talismanIds.map(id=>{const d=TALISMANS.find(d=>d.id===id);return d?t(d.nameKey):id;}).join(' · '):t('result.none')}),12,'#d8b384').setOrigin(.5).setWordWrapWidth(850).setAlign('center');
         if (result.unlocked?.length)
-            label(this, 640, 665, () => t("character.select.unlocked", { names: result.unlocked!.map(id => t(characterById(id).nameKey)).join(" · ") }), 14, "#cdb574").setOrigin(.5).setWordWrapWidth(850).setAlign("center");
-        button(this, 640, 550, () => t("gameOver.retry"), () => { AudioManager.forGame(this.game).unlock(); this.scene.start("Game"); });
-        button(this, 640, 615, () => t("gameOver.mainMenu"), () => this.scene.start("Menu"));
+            label(this, 640, 723, () => t("character.select.unlocked", { names: result.unlocked!.map(id => t(characterById(id).nameKey)).join(" · ") }), 14, "#cdb574").setOrigin(.5).setWordWrapWidth(850).setAlign("center");
+        button(this, 640, 584, () => t("gameOver.retry"), () => { AudioManager.forGame(this.game).unlock(); this.scene.start("Game"); });
+        button(this, 640, 649, () => t("gameOver.mainMenu"), () => this.scene.start("Menu"));
         this.input.keyboard?.once("keydown-ENTER", () => { AudioManager.forGame(this.game).unlock(); this.scene.start("Game"); });
     }
 }

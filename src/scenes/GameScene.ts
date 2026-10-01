@@ -1,3 +1,7 @@
+import { TalismanSession, applyPlayerTalismanDelta } from '../talismans/TalismanSession';
+import { talismanEnemyCapacity, TALISMAN_CONFIG } from '../talismans/talismanConfig';
+import { TalismanPanel } from '../ui/TalismanPanel';
+import { TalismanHud } from '../ui/TalismanHud';
 import { MapManager } from '../maps/MapManager';
 import { BossManager } from '../bosses/BossManager';
 import { Boss } from '../bosses/Boss';
@@ -31,6 +35,10 @@ import { Hud } from "../ui/Hud";
 import { UpgradePanel } from "../ui/UpgradePanel";
 import { label } from "../ui/common";
 export class GameScene extends Phaser.Scene {
+    talismans!: TalismanSession;
+    talismanPanel!: TalismanPanel;
+    private talismanHud!: TalismanHud;
+    private extraElites: {id:import('../encounters/encounterConfig').EliteId;strength:number;count:number}[]=[];
     mapManager!: MapManager;
     bosses!: BossManager;
     encounters!: EncounterManager;
@@ -75,6 +83,10 @@ export class GameScene extends Phaser.Scene {
         this.audio.stopSfx();
         this.audio.playBgm(K.NIGHT_STAGE);
         this.pendingRewards = [];
+        this.extraElites=[];
+        this.talismans=new TalismanSession();
+        this.talismanPanel=new TalismanPanel();
+        this.talismanHud=new TalismanHud(this);
         this.runStats = { eliteKills: 0, bossKills: 0, bossesDefeated: [], victory: false };
         this.elapsed = 0;
         this.saveTimer = 0;
@@ -97,10 +109,10 @@ export class GameScene extends Phaser.Scene {
         const enemyGroup = this.physics.add.group();
         const boltGroup = this.physics.add.group();
         this.enemies = new Pool(() => {
-            const e = new Enemy(this);
+            const e = new Enemy(this,()=>this.talismans.modifiers);
             enemyGroup.add(e);
             return e;
-        }, BALANCE.limits.enemies);
+        }, talismanEnemyCapacity(),()=>Math.min(TALISMAN_CONFIG.enemyHardLimit,Math.floor(BALANCE.limits.enemies*this.talismans.modifiers.enemyMaxCountMultiplier)));
         this.bolts = new Pool(() => {
             const b = new Projectile(this);
             boltGroup.add(b);
@@ -114,15 +126,18 @@ export class GameScene extends Phaser.Scene {
         this.weaponBar = new WeaponBar(this, this.weapons.loadout);
         this.panel = new UpgradePanel(this, this.upgrades);
         this.hud = new Hud(this, this.weapons.loadout);
-        this.spawn = new EnemySpawnSystem(this.enemies);
+        this.spawn = new EnemySpawnSystem(this.enemies,()=>this.talismans.modifiers);
         this.announcement = new EncounterAnnouncement(this);
-        this.bosses = new BossManager(this, this.player, this.enemies, enemyGroup, d => this.hurtPlayer(d), (key, name) => { this.announcement.show(key, name); this.audio.playSfx(K.LEVEL_UP); });
+        this.bosses = new BossManager(this, this.player, this.enemies, enemyGroup, d => this.hurtPlayer(d*this.talismans.modifiers.enemyDamageMultiplier), (key, name) => { this.announcement.show(key, name); this.audio.playSfx(K.LEVEL_UP); },()=>this.talismans.modifiers);
         this.bossHud = new BossHud(this, this.bosses);
         this.elites = new EliteManager(this, this.enemies, this.player, amount => { this.player.stats.hp = Math.min(this.player.stats.maxHp, this.player.stats.hp + amount); this.audio.playSfx(K.SOUL_PICKUP); });
         this.encounters = new EncounterManager(BALANCE.duration, e => { if (e.type === 'boss')
-            return this.bosses.spawnBoss(e.bossId); const spawned = this.elites.spawn(e.eliteId, e.strength, this.elapsed); if (spawned)
-            this.announcement.show('boss.elite'); return spawned; });
-        this.bossRewards = new BossRewardManager(this.upgrades, this.levels, amount => { this.levels.add(amount); this.progress.collectSouls(amount); });
+            return this.bosses.spawnBoss(e.bossId); const spawned = this.elites.spawn(e.eliteId, e.strength, this.elapsed); if (spawned) {
+            this.announcement.show('boss.elite');
+            const count=this.talismans.modifiers.extraEliteCount;
+            if(count)this.extraElites.push({id:e.eliteId,strength:e.strength,count});
+        } return spawned; });
+        this.bossRewards = new BossRewardManager(this.upgrades, this.levels, amount => { this.grantXp(amount); });
         this.particles = this.add
             .particles(0, 0, "ash", {
             emitting: false,
@@ -137,7 +152,7 @@ export class GameScene extends Phaser.Scene {
         this.physics.add.overlap(boltGroup, enemyGroup, (a, b) => {
             const bolt = a as Projectile;
             const enemy = b as Enemy;
-            if (this.ended || this.paused || this.panel.open)
+            if (this.ended || this.paused || this.panel.open || this.talismanPanel.open)
                 return;
             this.weapons.hit(bolt, enemy);
         });
@@ -162,13 +177,14 @@ export class GameScene extends Phaser.Scene {
             .setDepth(210)
             .setVisible(false);
         const blur = () => {
-            if (!this.ended && !this.panel.open && !this.paused)
+            if (!this.ended && !this.panel.open && !this.talismanPanel.open && !this.paused)
                 this.togglePause();
         };
         this.game.events.on(Phaser.Core.Events.BLUR, blur);
         this.events.once("shutdown", () => {
             this.game.events.off(Phaser.Core.Events.BLUR, blur);
             this.panel.close();
+            this.talismanPanel.close();
             this.weapons.destroy();
             this.bosses.destroy();
             this.bossHud.destroy();
@@ -185,7 +201,7 @@ export class GameScene extends Phaser.Scene {
         this.mapManager.update(0, [], false);
     }
     private hurtPlayer(damage: number) {
-        if (this.ended || this.paused || this.panel.open || this.player.invulnerable > 0)
+        if (this.ended || this.paused || this.panel.open || this.talismanPanel.open || this.player.invulnerable > 0)
             return;
         this.player.stats.hp = Math.max(0, this.player.stats.hp - damage * this.player.stats.damageTakenMultiplier);
         this.player.invulnerable = BALANCE.contactInvulnerability;
@@ -210,8 +226,7 @@ export class GameScene extends Phaser.Scene {
     update(_time: number, delta: number) {
         if (this.ended)
             return;
-        this.visuals.update(Math.min(delta / 1000, 0.05));
-        if (this.panel.open)
+        if (this.panel.open || this.talismanPanel.open)
             return;
         if (Phaser.Input.Keyboard.JustDown(this.keys.ESC))
             this.togglePause();
@@ -219,8 +234,14 @@ export class GameScene extends Phaser.Scene {
             return;
         const dt = Math.min(delta / 1000, 0.05);
         this.elapsed += dt;
+        this.talismans.update(this.elapsed);
+        // A due talisman is resolved before further combat or queued level-up cards.
+        if(this.talismans.ready){this.continueAfterCard();return;}
+        this.visuals.update(dt);
         this.announcement.update(dt);
         this.encounters.update(this.elapsed);
+        for(const extra of this.extraElites) while(extra.count>0 && this.elites.spawn(extra.id,extra.strength,this.elapsed))extra.count--;
+        this.extraElites=this.extraElites.filter(e=>e.count>0);
         this.saveTimer += dt;
         if (this.saveTimer >= 1) {
             this.saveTimer = 0;
@@ -262,10 +283,7 @@ export class GameScene extends Phaser.Scene {
                     d.text.setVisible(false);
             }
         this.hud.update(this.player, this.levels, this.elapsed, this.kills);
-        if (this.pendingRewards.length)
-            this.showBossReward();
-        else if (this.levels.pending > 0)
-            this.showUpgrade();
+        this.continueAfterCard();
     }
     private enemyDamaged(enemy: Enemy, value: number, critical: boolean, source: WeaponId) {
         this.audio.playSfx(K.ENEMY_HIT);
@@ -275,7 +293,7 @@ export class GameScene extends Phaser.Scene {
             this.kill(enemy, source);
     }
     private kill(enemy: Enemy, source: WeaponId) {
-        const x = enemy.x, y = enemy.y, xp = enemy.xp;
+        const x = enemy.x, y = enemy.y, xp = enemy.xp * (enemy.rank === "elite" ? this.talismans.modifiers.eliteRewardMultiplier : 1);
         if (enemy.rank === 'elite') {
             this.runStats.eliteKills++;
             this.elites.defeated(enemy);
@@ -326,8 +344,7 @@ export class GameScene extends Phaser.Scene {
             if (dist < p.stats.pickupRadius)
                 orb.magnetized = true;
             if (dist < 20) {
-                this.levels.add(orb.value);
-                this.progress.collectSouls(orb.value);
+                this.grantXp(orb.value);
                 this.audio.playSfx(K.SOUL_PICKUP);
                 orb.setActive(false).setVisible(false);
             }
@@ -378,7 +395,10 @@ export class GameScene extends Phaser.Scene {
         }, { bossNameKey: BOSSES[id].nameKey });
     }
     private continueAfterCard() {
-        if (this.pendingRewards.length)
+        if(this.ended || this.paused || this.panel.open || this.talismanPanel.open)return;
+        if(this.talismans.ready)
+            this.showTalisman();
+        else if (this.pendingRewards.length)
             this.showBossReward();
         else if (this.levels.pending > 0)
             this.showUpgrade();
@@ -412,8 +432,55 @@ export class GameScene extends Phaser.Scene {
         this.visuals.awaken(this.player.x, this.player.y);
         this.cameras.main.flash(100, 184, 161, 106, false);
         this.panel.show(this.upgrades.roll(), (choice) => {
+            const oldMax=this.player.stats.maxHp;
             this.upgrades.apply(choice, this.player.stats);
+            if(choice.definition.id==='vitality') {
+                const correction=(this.player.stats.maxHp-oldMax)*(this.talismans.modifiers.playerMaxHpMultiplier-1);
+                this.player.stats.maxHp+=correction;this.player.stats.hp=Math.min(this.player.stats.maxHp,this.player.stats.hp+correction);
+            }
             this.afterCard(choice);
+            this.continueAfterCard();
+        });
+    }
+    private grantXp(amount:number) {
+        const xp=amount*this.talismans.modifiers.xpMultiplier;
+        this.levels.add(xp);this.progress.collectSouls(xp);
+    }
+    /** Dev-only invocation; no production UI or debug controls. */
+    triggerTalismanEvent(id?:string) {
+        if(!import.meta.env.DEV || this.ended)return;
+        this.talismans.trigger();
+        if(!this.panel.open && !this.talismanPanel.open && !this.paused)this.showTalisman(id);
+    }
+    private showTalisman(id?:string) {
+        const d=this.talismans.offer(id);if(!d)return;
+        this.physics.pause();this.particles.pause();
+        this.events.emit('talisman:appear',d.id); // Optional sound hook; intentionally silent.
+        this.talismanPanel.show(d,accept=>{
+            const before=this.talismans.modifiers;
+            this.talismans.decide(accept);
+            const after=this.talismans.modifiers;
+            if(accept){
+                applyPlayerTalismanDelta(this.player.stats,before,after);
+                this.player.bossDamageMultiplier=after.bossDamageMultiplier;
+                this.upgrades.rarityBonus=after.upgradeRarityBonus;
+                // One pass on acceptance, never a per-frame effect scan. Preserve HP fraction.
+                for(const e of this.enemies.items)if(e.active){
+                    e.hp*=after.enemyHpMultiplier/before.enemyHpMultiplier;
+                    e.maxHp*=after.enemyHpMultiplier/before.enemyHpMultiplier;
+                    e.speed*=after.enemyMoveSpeedMultiplier/before.enemyMoveSpeedMultiplier;
+                    e.damage*=after.enemyDamageMultiplier/before.enemyDamageMultiplier;
+                }
+                this.talismanHud.refresh(this.talismans.acceptedIds);
+                this.cameras.main.flash(180,130,32,26,false);
+                const vignette=this.add.graphics().setScrollFactor(0).setDepth(195);
+                vignette.lineStyle(22,0x862e26,.35).strokeRect(11,11,1258,778);
+                this.tweens.add({targets:vignette,alpha:0,duration:650,onComplete:()=>vignette.destroy()});
+            }
+            this.events.emit(accept?'talisman:accept':'talisman:reject',d.id);
+            const feedback=label(this,640,220,()=>t(accept?'talisman.accepted':'talisman.rejected',{name:t(d.nameKey)}),20,'#e0bd8d').setOrigin(.5).setDepth(195);
+            this.tweens.add({targets:feedback,alpha:0,delay:400,duration:450,onComplete:()=>feedback.destroy()});
+            this.hud.update(this.player,this.levels,this.elapsed,this.kills);
             this.continueAfterCard();
         });
     }
@@ -435,6 +502,8 @@ export class GameScene extends Phaser.Scene {
             characterId: this.player.character.id,
             evolvedWeapons: Array.from(this.weapons.loadout.entries()).filter(([id]) => WEAPONS[id].baseWeaponId).map(([id]) => id),
             ...this.runStats,
+            talismanIds:[...this.talismans.acceptedIds],
+            rejectedTalismanIds:[...this.talismans.rejectedIds],
             unlocked: this.progress.takeNotifications(),
         });
     }

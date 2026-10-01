@@ -1,3 +1,4 @@
+import { TALISMAN_CONFIG } from '../talismans/talismanConfig';
 import { WeaponEvolutionManager } from "../weapons/evolution/WeaponEvolutionManager";
 import { WEAPON_UPGRADES } from "../data/weaponUpgrades";
 import type { WeaponLoadout } from "../weapons/WeaponLoadout";
@@ -9,6 +10,7 @@ export interface UpgradeChoice {
 }
 export class UpgradeSystem {
     levels: Record<string, number> = {};
+    rarityBonus = 0;
     constructor(private random: () => number = Math.random, readonly loadout?: WeaponLoadout) { if (loadout)
         this.evolutions = new WeaponEvolutionManager(loadout, this.levels); }
     readonly evolutions?: WeaponEvolutionManager;
@@ -25,11 +27,13 @@ export class UpgradeSystem {
             const i = Math.floor(this.random() * pool.length);
             const definition = pool.splice(i, 1)[0];
             const r = this.random() * 100;
+            const common=Math.max(0,BALANCE.rarity.Common-this.rarityBonus*TALISMAN_CONFIG.rarityBonus.commonReduction);
+            const rare=BALANCE.rarity.Rare+this.rarityBonus*TALISMAN_CONFIG.rarityBonus.rareIncrease;
             choices.push({
                 definition,
-                rarity: definition.weaponId ? "Common" : r < BALANCE.rarity.Common
+                rarity: definition.weaponId ? "Common" : r < common
                     ? "Common"
-                    : r < BALANCE.rarity.Common + BALANCE.rarity.Rare
+                    : r < common + rare
                         ? "Rare"
                         : "Epic",
             });

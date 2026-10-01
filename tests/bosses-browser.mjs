@@ -6,6 +6,8 @@ try{
  browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE_PATH||undefined,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  const page=await browser.newPage({viewport:{width:1280,height:800}}),errors=[],missing=[];page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.status()===404)missing.push(r.url());});
  await page.goto('http://127.0.0.1:5177');await page.waitForFunction(()=>window.__SURVIVOR_GAME__?.scene.isActive('Menu'));await page.keyboard.press('Enter');await page.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.isActive('CharacterSelect'));await page.keyboard.press('Enter');await page.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.isActive('Game'));
+ // Isolate legacy boss-pattern regression tests; mixed modal ordering is covered by talismans-browser.
+ await page.evaluate(async()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');s.talismans.times=[];s.events.on('create',()=>{s.talismans.times=[];});const {setLocale}=await import('/src/i18n/index.ts');setLocale('ko');});
  const elite=await page.evaluate(()=>{
   const s=window.__SURVIVOR_GAME__.scene.getScene('Game');s.paused=true;s.physics.pause();for(const e of s.enemies.items)e.disableBody(true,true);
   s.elapsed=119.99;s.encounters.update(s.elapsed);const before=s.enemies.items.filter(e=>e.active&&e.rank==='elite').length;

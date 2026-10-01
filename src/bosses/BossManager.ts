@@ -49,10 +49,10 @@ export class BossManager {
     private bullets: Bullet[];
     private gates: Gate[];
     private summonAlive = new Map<Enemy, number>();
-    constructor(private scene: Phaser.Scene, private player: Player, private enemies: Pool<Enemy>, group: Phaser.Physics.Arcade.Group, private hurt: (damage: number) => void, private announce: (key: 'boss.appear' | 'boss.phase', nameKey: import('../i18n').TranslationKey) => void) {
+    constructor(private scene: Phaser.Scene, private player: Player, private enemies: Pool<Enemy>, group: Phaser.Physics.Arcade.Group, private hurt: (damage: number) => void, private announce: (key: 'boss.appear' | 'boss.phase', nameKey: import('../i18n').TranslationKey) => void, modifiers?:()=>import('../talismans/talismanDefinitions').TalismanModifiers) {
         createBossTextures(scene);
         this.telegraph = scene.add.graphics().setDepth(1);
-        this.states = Object.values(BOSSES).map(d => { const boss = new Boss(scene, d); group.add(boss); enemies.items.push(boss); return { boss, slash: C.initialSlash, wave: C.initialWave, spirits: C.initialSpirits, summon: C.initialSummon, impactLife: 0 }; });
+        this.states = Object.values(BOSSES).map(d => { const boss = new Boss(scene, d, modifiers); group.add(boss); enemies.items.push(boss); return { boss, slash: C.initialSlash, wave: C.initialWave, spirits: C.initialSpirits, summon: C.initialSummon, impactLife: 0 }; });
         this.bullets = Array.from({ length: C.bulletCapacity }, () => ({ image: scene.add.image(0, 0, 'spirit-shot').setDepth(4).setVisible(false), life: 0, vx: 0, vy: 0, damage: 0, radius: 0, owner: 'ghost-king' as BossId }));
         this.gates = Array.from({ length: C.gateCapacity }, () => ({ image: scene.add.image(0, 0, 'ghost-gate').setDepth(1).setDisplaySize(72, 72).setVisible(false), life: 0, tick: 0, spawned: 0 }));
     }

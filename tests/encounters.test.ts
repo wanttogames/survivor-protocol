@@ -51,6 +51,6 @@ test('boss statistics persist and malformed/older saves stay compatible',()=>{
 test('reserved boss actors cannot be acquired by normal spawn pools; boss spawn multiplier lowers frequency',async()=>{
  const {Pool}=await import('../src/utils/Pool');const {EnemySpawnSystem}=await import('../src/systems/EnemySpawnSystem');
  const p=new Pool<{active:boolean;poolEligible:boolean}>(()=>({active:true,poolEligible:true}),3);const boss={active:false,poolEligible:false};p.items.push(boss);assert.notEqual(p.acquire(),boss);
- const count=(rate:number)=>{let n=0;const spawner=new EnemySpawnSystem({acquire:()=>({spawn:()=>n++})} as never);for(let i=0;i<100;i++)spawner.update(.1,0,1800,1800,rate);return n;};
+ const count=(rate:number)=>{let n=0;const spawner=new EnemySpawnSystem({items:[],acquire:()=>({spawn:()=>n++})} as never);for(let i=0;i<100;i++)spawner.update(.1,0,1800,1800,rate);return n;};
  const normal=count(1),duringBoss=count(.6);assert.ok(duringBoss<normal&&duringBoss/normal>.5&&duringBoss/normal<.75);
 });

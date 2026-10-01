@@ -1,3 +1,5 @@
+import { neutralModifiers } from '../talismans/talismanDefinitions';
+import { TALISMAN_CONFIG } from '../talismans/talismanConfig';
 import { safeMapSpawn } from '../maps/spawnSafety';
 import { BALANCE } from "../config/balance";
 import type { EnemyKind } from "../data/enemies";
@@ -5,7 +7,7 @@ import type { Enemy } from "../entities/Enemy";
 import type { Pool } from "../utils/Pool";
 export class EnemySpawnSystem {
   private cooldown = 0;
-  constructor(private pool: Pool<Enemy>) {}
+  constructor(private pool: Pool<Enemy>, private modifiers:()=>import("../talismans/talismanDefinitions").TalismanModifiers = neutralModifiers) {}
   update(dt: number, t: number, x: number, y: number, rateMultiplier = 1) {
     this.cooldown -= dt * rateMultiplier;
     if (this.cooldown > 0) return;
@@ -13,8 +15,13 @@ export class EnemySpawnSystem {
       BALANCE.spawn.minInterval,
       BALANCE.spawn.initialInterval * (1 - t / BALANCE.spawn.ramp),
     );
+    const multiplier=this.modifiers().enemyMaxCountMultiplier;
+    const limit=Math.min(TALISMAN_CONFIG.enemyHardLimit,Math.floor(BALANCE.limits.enemies*multiplier));
+    let active=this.pool.items.filter(e=>e.active).length;
+    // The pact changes maximum population, not the existing spawn cadence.
     const count = 1 + Math.floor(t / 150);
     for (let i = 0; i < count; i++) {
+      if(active>=limit)return;
       const enemy = this.pool.acquire();
       if (!enemy) return;
       const a = Math.random() * Math.PI * 2;
@@ -42,6 +49,7 @@ export class EnemySpawnSystem {
         1 + (t / 60) * BALANCE.spawn.hpPerMinute,
         1 + (t / 60) * BALANCE.spawn.speedPerMinute,
       );
+      active++;
     }
   }
 }
