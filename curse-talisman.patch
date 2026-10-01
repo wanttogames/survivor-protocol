@@ -1,0 +1,943 @@
+diff --git a/package.json b/package.json
+index c94befe..a4d524e 100644
+--- a/package.json
++++ b/package.json
+@@ -16,7 +16,8 @@
+     "test:bosses": "node tests/bosses-browser.mjs",
+     "test:map": "node tests/maps-browser.mjs",
+     "test:collision": "node tests/map-collision-browser.mjs",
+-    "test:locale": "node tests/locale-browser.mjs"
++    "test:locale": "node tests/locale-browser.mjs",
++    "test:talismans": "node tests/talismans-browser.mjs"
+   },
+   "dependencies": {
+     "phaser": "3.90.0"
+diff --git a/src/bosses/Boss.ts b/src/bosses/Boss.ts
+index ddf1996..6cb7f56 100644
+--- a/src/bosses/Boss.ts
++++ b/src/bosses/Boss.ts
+@@ -5,7 +5,7 @@ import type { BossDefinition } from '../encounters/encounterConfig';
+ export class Boss extends Enemy {
+     readonly poolEligible = false;
+     phase = 1;
+-    constructor(scene: Phaser.Scene, readonly definition: BossDefinition) { super(scene); }
++    constructor(scene: Phaser.Scene, readonly definition: BossDefinition, modifiers?:()=>import('../talismans/talismanDefinitions').TalismanModifiers) { super(scene,modifiers); }
+     awaken(x: number, y: number) {
+         const d = this.definition;
+         this.spawn(x, y, 'tank', 1, 1);
+@@ -13,9 +13,9 @@ export class Boss extends Enemy {
+         this.phase = 1;
+         this.setTexture(d.texture).setScale(d.scale).setCircle(d.radius, 64 - d.radius, 64 - d.radius);
+         this.collisionRadius = d.radius * d.scale;
+-        this.hp = this.maxHp = d.hp;
+-        this.speed = d.speed;
+-        this.damage = d.damage;
++        this.hp = this.maxHp = d.hp * this.curseModifiers().enemyHpMultiplier;
++        this.speed = d.speed * this.curseModifiers().enemyMoveSpeedMultiplier;
++        this.damage = d.damage * this.curseModifiers().enemyDamageMultiplier;
+         this.xp = 0;
+     }
+ }
+diff --git a/src/bosses/BossManager.ts b/src/bosses/BossManager.ts
+index 03815a9..99bdfe0 100644
+--- a/src/bosses/BossManager.ts
++++ b/src/bosses/BossManager.ts
+@@ -49,10 +49,10 @@ export class BossManager {
+     private bullets: Bullet[];
+     private gates: Gate[];
+     private summonAlive = new Map<Enemy, number>();
+-    constructor(private scene: Phaser.Scene, private player: Player, private enemies: Pool<Enemy>, group: Phaser.Physics.Arcade.Group, private hurt: (damage: number) => void, private announce: (key: 'boss.appear' | 'boss.phase', nameKey: import('../i18n').TranslationKey) => void) {
++    constructor(private scene: Phaser.Scene, private player: Player, private enemies: Pool<Enemy>, group: Phaser.Physics.Arcade.Group, private hurt: (damage: number) => void, private announce: (key: 'boss.appear' | 'boss.phase', nameKey: import('../i18n').TranslationKey) => void, modifiers?:()=>import('../talismans/talismanDefinitions').TalismanModifiers) {
+         createBossTextures(scene);
+         this.telegraph = scene.add.graphics().setDepth(1);
+-        this.states = Object.values(BOSSES).map(d => { const boss = new Boss(scene, d); group.add(boss); enemies.items.push(boss); return { boss, slash: C.initialSlash, wave: C.initialWave, spirits: C.initialSpirits, summon: C.initialSummon, impactLife: 0 }; });
++        this.states = Object.values(BOSSES).map(d => { const boss = new Boss(scene, d, modifiers); group.add(boss); enemies.items.push(boss); return { boss, slash: C.initialSlash, wave: C.initialWave, spirits: C.initialSpirits, summon: C.initialSummon, impactLife: 0 }; });
+         this.bullets = Array.from({ length: C.bulletCapacity }, () => ({ image: scene.add.image(0, 0, 'spirit-shot').setDepth(4).setVisible(false), life: 0, vx: 0, vy: 0, damage: 0, radius: 0, owner: 'ghost-king' as BossId }));
+         this.gates = Array.from({ length: C.gateCapacity }, () => ({ image: scene.add.image(0, 0, 'ghost-gate').setDepth(1).setDisplaySize(72, 72).setVisible(false), life: 0, tick: 0, spawned: 0 }));
+     }
+diff --git a/src/entities/Enemy.ts b/src/entities/Enemy.ts
+index 6057db1..5f96be4 100644
+--- a/src/entities/Enemy.ts
++++ b/src/entities/Enemy.ts
+@@ -1,5 +1,7 @@
+ import Phaser from "phaser";
+ import { ENEMIES, type EnemyKind } from "../data/enemies";
++import { neutralModifiers, type TalismanModifiers } from "../talismans/talismanDefinitions";
++const NEUTRAL = neutralModifiers();
+ export class Enemy extends Phaser.Physics.Arcade.Sprite {
+   rank: "normal" | "elite" | "boss" = "normal";
+   eliteId?: import("../encounters/encounterConfig").EliteId;
+@@ -12,7 +14,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
+   generation = 0;
+   flash = 0;
+   kind: EnemyKind = "grunt";
+-  constructor(scene: Phaser.Scene) {
++  constructor(scene: Phaser.Scene, readonly curseModifiers: () => TalismanModifiers = () => NEUTRAL) {
+     super(scene, 0, 0, "grunt");
+     scene.add.existing(this);
+     scene.physics.add.existing(this);
+@@ -32,9 +34,9 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
+     this.setTexture(kind);
+     this.enableBody(true, x, y, true, true);
+     this.setCircle(d.radius, 32 - d.radius, 32 - d.radius);
+-    this.hp = this.maxHp = d.hp * hpScale;
+-    this.speed = d.speed * speedScale;
+-    this.damage = d.damage;
++    this.hp = this.maxHp = d.hp * hpScale * this.curseModifiers().enemyHpMultiplier;
++    this.speed = d.speed * speedScale * this.curseModifiers().enemyMoveSpeedMultiplier;
++    this.damage = d.damage * this.curseModifiers().enemyDamageMultiplier;
+     this.xp = d.xp;
+     this.generation++;
+     this.flash = 0;
+diff --git a/src/entities/Player.ts b/src/entities/Player.ts
+index b301965..c41cb3b 100644
+--- a/src/entities/Player.ts
++++ b/src/entities/Player.ts
+@@ -6,6 +6,7 @@ import { BALANCE, type PlayerStats } from "../config/balance";
+ export class Player extends Phaser.Physics.Arcade.Sprite {
+     stats: PlayerStats = { ...BALANCE.player };
+     invulnerable = 0;
++    bossDamageMultiplier = 1;
+     private walkTime = 0;
+     private adornment: Phaser.GameObjects.Graphics;
+     constructor(scene: Phaser.Scene, readonly character: CharacterDefinition = characterById("exorcist")) {
+diff --git a/src/i18n/en.ts b/src/i18n/en.ts
+index 5c86ac3..4bed971 100644
+--- a/src/i18n/en.ts
++++ b/src/i18n/en.ts
+@@ -1,4 +1,12 @@
+ export const en = {
++  talisman: {
++    title: 'CURSED TALISMAN · A DANGEROUS PACT', risk: 'Risk {stars}', curses: 'Curse', rewards: 'Power in Return',
++    guide: 'This run only · 1 Accept / 2 Reject', accept: 'Accept the Talisman', reject: 'Burn It',
++    accepted: 'Accepted {name}', rejected: 'The talisman was burned', hud: 'Talismans  {symbols}', result: 'Talismans acquired: {names}',
++    names: {samdo:'Talisman of the Three Crossings',gate:'Talisman of the Spirit Gate',hunger:'Talisman of the Hungry Soul',trick:'Dokkaebi’s Trick',reaper:'The Reaper’s Pact',moon:'Talisman of the Red Moon'},
++    effects: {enemyMaxCountMultiplier:'Maximum enemies +{value}%',enemyMoveSpeedMultiplier:'Enemy movement speed +{value}%',enemyDamageMultiplier:'Enemy damage +{value}%',enemyHpMultiplier:'Enemy maximum HP +{value}%',xpMultiplier:'XP gained +{value}%',playerDamageMultiplier:'All damage +{value}%',playerMoveSpeedMultiplier:'Movement speed +{value}%',attackSpeedMultiplier:'Attack speed +{value}%',bossDamageMultiplier:'Damage to bosses +{value}%',playerMaxHpMultiplier:'Maximum HP {value}%',eliteRewardMultiplier:'Elite XP +{value}% (stacks with XP bonus)',upgradeRarityBonus:'Stat cards: Rare +{rare}pp / Epic +{epic}pp',extraEliteCount:'Future elite encounters: +{value} elite'},
++  },
++
+   language: { label: "Language", korean: "한국어", english: "English" },
+   map: { moonlitVillage: { name: "Moonlit Village", description: "An abandoned village beyond the spirit gate" } },
+   boss: {
+diff --git a/src/i18n/ko.ts b/src/i18n/ko.ts
+index 5674e1d..c505f86 100644
+--- a/src/i18n/ko.ts
++++ b/src/i18n/ko.ts
+@@ -1,5 +1,13 @@
+ import type { LocaleMessages } from "./en";
+ export const ko = {
++  talisman: {
++    title: '저주받은 부적 · 위험한 계약', risk: '위험도 {stars}', curses: '저주', rewards: '대가로 얻는 힘',
++    guide: '이 계약은 이번 판에만 적용됩니다 · 1 수락 / 2 거절', accept: '부적을 받는다', reject: '태워버린다',
++    accepted: '{name}을 받아들였습니다', rejected: '부적을 태워버렸습니다', hud: '부적  {symbols}', result: '획득한 부적: {names}',
++    names: {samdo:'삼도천의 부적',gate:'귀문의 부적',hunger:'굶주린 혼의 부적',trick:'도깨비의 장난',reaper:'저승사자의 계약',moon:'붉은 달의 부적'},
++    effects: {enemyMaxCountMultiplier:'최대 적 수 +{value}%',enemyMoveSpeedMultiplier:'적 이동속도 +{value}%',enemyDamageMultiplier:'적 공격력 +{value}%',enemyHpMultiplier:'적 최대 체력 +{value}%',xpMultiplier:'경험치 획득량 +{value}%',playerDamageMultiplier:'모든 피해량 +{value}%',playerMoveSpeedMultiplier:'이동속도 +{value}%',attackSpeedMultiplier:'공격속도 +{value}%',bossDamageMultiplier:'보스 피해량 +{value}%',playerMaxHpMultiplier:'최대 체력 {value}%',eliteRewardMultiplier:'엘리트 경험치 +{value}% (경험치 보너스와 중첩)',upgradeRarityBonus:'능력 카드 확률: 희귀 +{rare}%p / 영웅 +{epic}%p',extraEliteCount:'이후 엘리트 등장마다 +{value}마리'},
++  },
++
+   language: { label: "언어", korean: "한국어", english: "English" },
+   map: { moonlitVillage: { name: "월하촌", description: "귀문이 열린 버려진 마을" } },
+   boss: {
+diff --git a/src/scenes/GameOverScene.ts b/src/scenes/GameOverScene.ts
+index 06bbe25..76afe96 100644
+--- a/src/scenes/GameOverScene.ts
++++ b/src/scenes/GameOverScene.ts
+@@ -1,3 +1,4 @@
++import { TALISMANS } from '../talismans/talismanDefinitions';
+ import { BOSSES, type BossId } from '../encounters/encounterConfig';
+ import { WEAPONS, type WeaponId } from '../data/weaponConfig';
+ import { characterById } from "../characters/characterDefinitions";
+@@ -9,6 +10,8 @@ import { t } from "../i18n";
+ import Phaser from "phaser";
+ import { label, button, timeLabel } from "../ui/common";
+ export interface RunResult {
++    talismanIds?: string[];
++    rejectedTalismanIds?: string[];
+     time: number;
+     level: number;
+     kills: number;
+@@ -44,10 +47,11 @@ export class GameOverScene extends Phaser.Scene {
+         });
+         const details = [() => t('result.character', { name: t(characterById(result.characterId ?? 'exorcist').nameKey) }), () => t('result.evolved', { names: result.evolvedWeapons?.length ? result.evolvedWeapons.map(id => t(WEAPONS[id].nameKey)).join(' · ') : t('result.none') }), () => t('result.bosses', { names: result.bossesDefeated?.length ? result.bossesDefeated.map(id => t(BOSSES[id].nameKey)).join(' · ') : t('result.none') }) + '   ' + t('result.elites', { count: result.eliteKills ?? 0 })];
+         details.forEach((text, i) => label(this, 640, 437 + i * 29, text, 12, '#c8b993').setOrigin(.5).setWordWrapWidth(850).setAlign('center'));
++        label(this,640,524,()=>t('talisman.result',{names:result.talismanIds?.length?result.talismanIds.map(id=>{const d=TALISMANS.find(d=>d.id===id);return d?t(d.nameKey):id;}).join(' · '):t('result.none')}),12,'#d8b384').setOrigin(.5).setWordWrapWidth(850).setAlign('center');
+         if (result.unlocked?.length)
+-            label(this, 640, 665, () => t("character.select.unlocked", { names: result.unlocked!.map(id => t(characterById(id).nameKey)).join(" · ") }), 14, "#cdb574").setOrigin(.5).setWordWrapWidth(850).setAlign("center");
+-        button(this, 640, 550, () => t("gameOver.retry"), () => { AudioManager.forGame(this.game).unlock(); this.scene.start("Game"); });
+-        button(this, 640, 615, () => t("gameOver.mainMenu"), () => this.scene.start("Menu"));
++            label(this, 640, 723, () => t("character.select.unlocked", { names: result.unlocked!.map(id => t(characterById(id).nameKey)).join(" · ") }), 14, "#cdb574").setOrigin(.5).setWordWrapWidth(850).setAlign("center");
++        button(this, 640, 584, () => t("gameOver.retry"), () => { AudioManager.forGame(this.game).unlock(); this.scene.start("Game"); });
++        button(this, 640, 649, () => t("gameOver.mainMenu"), () => this.scene.start("Menu"));
+         this.input.keyboard?.once("keydown-ENTER", () => { AudioManager.forGame(this.game).unlock(); this.scene.start("Game"); });
+     }
+ }
+diff --git a/src/scenes/GameScene.ts b/src/scenes/GameScene.ts
+index d3d7764..784da29 100644
+--- a/src/scenes/GameScene.ts
++++ b/src/scenes/GameScene.ts
+@@ -1,3 +1,7 @@
++import { TalismanSession, applyPlayerTalismanDelta } from '../talismans/TalismanSession';
++import { talismanEnemyCapacity, TALISMAN_CONFIG } from '../talismans/talismanConfig';
++import { TalismanPanel } from '../ui/TalismanPanel';
++import { TalismanHud } from '../ui/TalismanHud';
+ import { MapManager } from '../maps/MapManager';
+ import { BossManager } from '../bosses/BossManager';
+ import { Boss } from '../bosses/Boss';
+@@ -31,6 +35,10 @@ import { Hud } from "../ui/Hud";
+ import { UpgradePanel } from "../ui/UpgradePanel";
+ import { label } from "../ui/common";
+ export class GameScene extends Phaser.Scene {
++    talismans!: TalismanSession;
++    talismanPanel!: TalismanPanel;
++    private talismanHud!: TalismanHud;
++    private extraElites: {id:import('../encounters/encounterConfig').EliteId;strength:number;count:number}[]=[];
+     mapManager!: MapManager;
+     bosses!: BossManager;
+     encounters!: EncounterManager;
+@@ -75,6 +83,10 @@ export class GameScene extends Phaser.Scene {
+         this.audio.stopSfx();
+         this.audio.playBgm(K.NIGHT_STAGE);
+         this.pendingRewards = [];
++        this.extraElites=[];
++        this.talismans=new TalismanSession();
++        this.talismanPanel=new TalismanPanel();
++        this.talismanHud=new TalismanHud(this);
+         this.runStats = { eliteKills: 0, bossKills: 0, bossesDefeated: [], victory: false };
+         this.elapsed = 0;
+         this.saveTimer = 0;
+@@ -97,10 +109,10 @@ export class GameScene extends Phaser.Scene {
+         const enemyGroup = this.physics.add.group();
+         const boltGroup = this.physics.add.group();
+         this.enemies = new Pool(() => {
+-            const e = new Enemy(this);
++            const e = new Enemy(this,()=>this.talismans.modifiers);
+             enemyGroup.add(e);
+             return e;
+-        }, BALANCE.limits.enemies);
++        }, talismanEnemyCapacity(),()=>Math.min(TALISMAN_CONFIG.enemyHardLimit,Math.floor(BALANCE.limits.enemies*this.talismans.modifiers.enemyMaxCountMultiplier)));
+         this.bolts = new Pool(() => {
+             const b = new Projectile(this);
+             boltGroup.add(b);
+@@ -114,15 +126,18 @@ export class GameScene extends Phaser.Scene {
+         this.weaponBar = new WeaponBar(this, this.weapons.loadout);
+         this.panel = new UpgradePanel(this, this.upgrades);
+         this.hud = new Hud(this, this.weapons.loadout);
+-        this.spawn = new EnemySpawnSystem(this.enemies);
++        this.spawn = new EnemySpawnSystem(this.enemies,()=>this.talismans.modifiers);
+         this.announcement = new EncounterAnnouncement(this);
+-        this.bosses = new BossManager(this, this.player, this.enemies, enemyGroup, d => this.hurtPlayer(d), (key, name) => { this.announcement.show(key, name); this.audio.playSfx(K.LEVEL_UP); });
++        this.bosses = new BossManager(this, this.player, this.enemies, enemyGroup, d => this.hurtPlayer(d*this.talismans.modifiers.enemyDamageMultiplier), (key, name) => { this.announcement.show(key, name); this.audio.playSfx(K.LEVEL_UP); },()=>this.talismans.modifiers);
+         this.bossHud = new BossHud(this, this.bosses);
+         this.elites = new EliteManager(this, this.enemies, this.player, amount => { this.player.stats.hp = Math.min(this.player.stats.maxHp, this.player.stats.hp + amount); this.audio.playSfx(K.SOUL_PICKUP); });
+         this.encounters = new EncounterManager(BALANCE.duration, e => { if (e.type === 'boss')
+-            return this.bosses.spawnBoss(e.bossId); const spawned = this.elites.spawn(e.eliteId, e.strength, this.elapsed); if (spawned)
+-            this.announcement.show('boss.elite'); return spawned; });
+-        this.bossRewards = new BossRewardManager(this.upgrades, this.levels, amount => { this.levels.add(amount); this.progress.collectSouls(amount); });
++            return this.bosses.spawnBoss(e.bossId); const spawned = this.elites.spawn(e.eliteId, e.strength, this.elapsed); if (spawned) {
++            this.announcement.show('boss.elite');
++            const count=this.talismans.modifiers.extraEliteCount;
++            if(count)this.extraElites.push({id:e.eliteId,strength:e.strength,count});
++        } return spawned; });
++        this.bossRewards = new BossRewardManager(this.upgrades, this.levels, amount => { this.grantXp(amount); });
+         this.particles = this.add
+             .particles(0, 0, "ash", {
+             emitting: false,
+@@ -137,7 +152,7 @@ export class GameScene extends Phaser.Scene {
+         this.physics.add.overlap(boltGroup, enemyGroup, (a, b) => {
+             const bolt = a as Projectile;
+             const enemy = b as Enemy;
+-            if (this.ended || this.paused || this.panel.open)
++            if (this.ended || this.paused || this.panel.open || this.talismanPanel.open)
+                 return;
+             this.weapons.hit(bolt, enemy);
+         });
+@@ -162,13 +177,14 @@ export class GameScene extends Phaser.Scene {
+             .setDepth(210)
+             .setVisible(false);
+         const blur = () => {
+-            if (!this.ended && !this.panel.open && !this.paused)
++            if (!this.ended && !this.panel.open && !this.talismanPanel.open && !this.paused)
+                 this.togglePause();
+         };
+         this.game.events.on(Phaser.Core.Events.BLUR, blur);
+         this.events.once("shutdown", () => {
+             this.game.events.off(Phaser.Core.Events.BLUR, blur);
+             this.panel.close();
++            this.talismanPanel.close();
+             this.weapons.destroy();
+             this.bosses.destroy();
+             this.bossHud.destroy();
+@@ -185,7 +201,7 @@ export class GameScene extends Phaser.Scene {
+         this.mapManager.update(0, [], false);
+     }
+     private hurtPlayer(damage: number) {
+-        if (this.ended || this.paused || this.panel.open || this.player.invulnerable > 0)
++        if (this.ended || this.paused || this.panel.open || this.talismanPanel.open || this.player.invulnerable > 0)
+             return;
+         this.player.stats.hp = Math.max(0, this.player.stats.hp - damage * this.player.stats.damageTakenMultiplier);
+         this.player.invulnerable = BALANCE.contactInvulnerability;
+@@ -210,8 +226,7 @@ export class GameScene extends Phaser.Scene {
+     update(_time: number, delta: number) {
+         if (this.ended)
+             return;
+-        this.visuals.update(Math.min(delta / 1000, 0.05));
+-        if (this.panel.open)
++        if (this.panel.open || this.talismanPanel.open)
+             return;
+         if (Phaser.Input.Keyboard.JustDown(this.keys.ESC))
+             this.togglePause();
+@@ -219,8 +234,14 @@ export class GameScene extends Phaser.Scene {
+             return;
+         const dt = Math.min(delta / 1000, 0.05);
+         this.elapsed += dt;
++        this.talismans.update(this.elapsed);
++        // A due talisman is resolved before further combat or queued level-up cards.
++        if(this.talismans.ready){this.continueAfterCard();return;}
++        this.visuals.update(dt);
+         this.announcement.update(dt);
+         this.encounters.update(this.elapsed);
++        for(const extra of this.extraElites) while(extra.count>0 && this.elites.spawn(extra.id,extra.strength,this.elapsed))extra.count--;
++        this.extraElites=this.extraElites.filter(e=>e.count>0);
+         this.saveTimer += dt;
+         if (this.saveTimer >= 1) {
+             this.saveTimer = 0;
+@@ -262,10 +283,7 @@ export class GameScene extends Phaser.Scene {
+                     d.text.setVisible(false);
+             }
+         this.hud.update(this.player, this.levels, this.elapsed, this.kills);
+-        if (this.pendingRewards.length)
+-            this.showBossReward();
+-        else if (this.levels.pending > 0)
+-            this.showUpgrade();
++        this.continueAfterCard();
+     }
+     private enemyDamaged(enemy: Enemy, value: number, critical: boolean, source: WeaponId) {
+         this.audio.playSfx(K.ENEMY_HIT);
+@@ -275,7 +293,7 @@ export class GameScene extends Phaser.Scene {
+             this.kill(enemy, source);
+     }
+     private kill(enemy: Enemy, source: WeaponId) {
+-        const x = enemy.x, y = enemy.y, xp = enemy.xp;
++        const x = enemy.x, y = enemy.y, xp = enemy.xp * (enemy.rank === "elite" ? this.talismans.modifiers.eliteRewardMultiplier : 1);
+         if (enemy.rank === 'elite') {
+             this.runStats.eliteKills++;
+             this.elites.defeated(enemy);
+@@ -326,8 +344,7 @@ export class GameScene extends Phaser.Scene {
+             if (dist < p.stats.pickupRadius)
+                 orb.magnetized = true;
+             if (dist < 20) {
+-                this.levels.add(orb.value);
+-                this.progress.collectSouls(orb.value);
++                this.grantXp(orb.value);
+                 this.audio.playSfx(K.SOUL_PICKUP);
+                 orb.setActive(false).setVisible(false);
+             }
+@@ -378,7 +395,10 @@ export class GameScene extends Phaser.Scene {
+         }, { bossNameKey: BOSSES[id].nameKey });
+     }
+     private continueAfterCard() {
+-        if (this.pendingRewards.length)
++        if(this.ended || this.paused || this.panel.open || this.talismanPanel.open)return;
++        if(this.talismans.ready)
++            this.showTalisman();
++        else if (this.pendingRewards.length)
+             this.showBossReward();
+         else if (this.levels.pending > 0)
+             this.showUpgrade();
+@@ -412,11 +432,58 @@ export class GameScene extends Phaser.Scene {
+         this.visuals.awaken(this.player.x, this.player.y);
+         this.cameras.main.flash(100, 184, 161, 106, false);
+         this.panel.show(this.upgrades.roll(), (choice) => {
++            const oldMax=this.player.stats.maxHp;
+             this.upgrades.apply(choice, this.player.stats);
++            if(choice.definition.id==='vitality') {
++                const correction=(this.player.stats.maxHp-oldMax)*(this.talismans.modifiers.playerMaxHpMultiplier-1);
++                this.player.stats.maxHp+=correction;this.player.stats.hp=Math.min(this.player.stats.maxHp,this.player.stats.hp+correction);
++            }
+             this.afterCard(choice);
+             this.continueAfterCard();
+         });
+     }
++    private grantXp(amount:number) {
++        const xp=amount*this.talismans.modifiers.xpMultiplier;
++        this.levels.add(xp);this.progress.collectSouls(xp);
++    }
++    /** Dev-only invocation; no production UI or debug controls. */
++    triggerTalismanEvent(id?:string) {
++        if(!import.meta.env.DEV || this.ended)return;
++        this.talismans.trigger();
++        if(!this.panel.open && !this.talismanPanel.open && !this.paused)this.showTalisman(id);
++    }
++    private showTalisman(id?:string) {
++        const d=this.talismans.offer(id);if(!d)return;
++        this.physics.pause();this.particles.pause();
++        this.events.emit('talisman:appear',d.id); // Optional sound hook; intentionally silent.
++        this.talismanPanel.show(d,accept=>{
++            const before=this.talismans.modifiers;
++            this.talismans.decide(accept);
++            const after=this.talismans.modifiers;
++            if(accept){
++                applyPlayerTalismanDelta(this.player.stats,before,after);
++                this.player.bossDamageMultiplier=after.bossDamageMultiplier;
++                this.upgrades.rarityBonus=after.upgradeRarityBonus;
++                // One pass on acceptance, never a per-frame effect scan. Preserve HP fraction.
++                for(const e of this.enemies.items)if(e.active){
++                    e.hp*=after.enemyHpMultiplier/before.enemyHpMultiplier;
++                    e.maxHp*=after.enemyHpMultiplier/before.enemyHpMultiplier;
++                    e.speed*=after.enemyMoveSpeedMultiplier/before.enemyMoveSpeedMultiplier;
++                    e.damage*=after.enemyDamageMultiplier/before.enemyDamageMultiplier;
++                }
++                this.talismanHud.refresh(this.talismans.acceptedIds);
++                this.cameras.main.flash(180,130,32,26,false);
++                const vignette=this.add.graphics().setScrollFactor(0).setDepth(195);
++                vignette.lineStyle(22,0x862e26,.35).strokeRect(11,11,1258,778);
++                this.tweens.add({targets:vignette,alpha:0,duration:650,onComplete:()=>vignette.destroy()});
++            }
++            this.events.emit(accept?'talisman:accept':'talisman:reject',d.id);
++            const feedback=label(this,640,220,()=>t(accept?'talisman.accepted':'talisman.rejected',{name:t(d.nameKey)}),20,'#e0bd8d').setOrigin(.5).setDepth(195);
++            this.tweens.add({targets:feedback,alpha:0,delay:400,duration:450,onComplete:()=>feedback.destroy()});
++            this.hud.update(this.player,this.levels,this.elapsed,this.kills);
++            this.continueAfterCard();
++        });
++    }
+     finish(won: boolean) {
+         if (this.ended)
+             return;
+@@ -435,6 +502,8 @@ export class GameScene extends Phaser.Scene {
+             characterId: this.player.character.id,
+             evolvedWeapons: Array.from(this.weapons.loadout.entries()).filter(([id]) => WEAPONS[id].baseWeaponId).map(([id]) => id),
+             ...this.runStats,
++            talismanIds:[...this.talismans.acceptedIds],
++            rejectedTalismanIds:[...this.talismans.rejectedIds],
+             unlocked: this.progress.takeNotifications(),
+         });
+     }
+diff --git a/src/systems/CombatSystem.ts b/src/systems/CombatSystem.ts
+index cf10033..acb25f6 100644
+--- a/src/systems/CombatSystem.ts
++++ b/src/systems/CombatSystem.ts
+@@ -7,6 +7,7 @@ import type { Pool } from "../utils/Pool";
+ import { WEAPON_RULES, type WeaponStats } from "../data/weaponConfig";
+ export class CombatSystem {
+     private cooldown = 0;
++    lastDamage = 0;
+     constructor(private player: Player, private enemies: Pool<Enemy>, private bolts: Pool<Projectile>, private onShot: () => void = () => { }, private target?: (range: number) => Enemy | undefined, private weaponStats?: () => WeaponStats, private onProjectile?: (b:Projectile)=>void) { }
+     update(dt: number) {
+         this.cooldown -= dt;
+@@ -49,7 +50,8 @@ export class CombatSystem {
+         if (!b.active || !e.active || b.hits.get(e) === e.generation)
+             return false;
+         b.hits.set(e, e.generation);
+-        e.hp -= b.damage;
++        this.lastDamage = b.damage * (e.rank === "boss" ? this.player.bossDamageMultiplier : 1);
++        e.hp -= this.lastDamage;
+         e.setTintFill(0xffffff);
+         e.flash = 0.07;
+         if (b.pierce-- <= 0)
+diff --git a/src/systems/EnemySpawnSystem.ts b/src/systems/EnemySpawnSystem.ts
+index 37b7ca6..0c94dff 100644
+--- a/src/systems/EnemySpawnSystem.ts
++++ b/src/systems/EnemySpawnSystem.ts
+@@ -1,3 +1,5 @@
++import { neutralModifiers } from '../talismans/talismanDefinitions';
++import { TALISMAN_CONFIG } from '../talismans/talismanConfig';
+ import { safeMapSpawn } from '../maps/spawnSafety';
+ import { BALANCE } from "../config/balance";
+ import type { EnemyKind } from "../data/enemies";
+@@ -5,7 +7,7 @@ import type { Enemy } from "../entities/Enemy";
+ import type { Pool } from "../utils/Pool";
+ export class EnemySpawnSystem {
+   private cooldown = 0;
+-  constructor(private pool: Pool<Enemy>) {}
++  constructor(private pool: Pool<Enemy>, private modifiers:()=>import("../talismans/talismanDefinitions").TalismanModifiers = neutralModifiers) {}
+   update(dt: number, t: number, x: number, y: number, rateMultiplier = 1) {
+     this.cooldown -= dt * rateMultiplier;
+     if (this.cooldown > 0) return;
+@@ -13,8 +15,13 @@ export class EnemySpawnSystem {
+       BALANCE.spawn.minInterval,
+       BALANCE.spawn.initialInterval * (1 - t / BALANCE.spawn.ramp),
+     );
++    const multiplier=this.modifiers().enemyMaxCountMultiplier;
++    const limit=Math.min(TALISMAN_CONFIG.enemyHardLimit,Math.floor(BALANCE.limits.enemies*multiplier));
++    let active=this.pool.items.filter(e=>e.active).length;
++    // The pact changes maximum population, not the existing spawn cadence.
+     const count = 1 + Math.floor(t / 150);
+     for (let i = 0; i < count; i++) {
++      if(active>=limit)return;
+       const enemy = this.pool.acquire();
+       if (!enemy) return;
+       const a = Math.random() * Math.PI * 2;
+@@ -42,6 +49,7 @@ export class EnemySpawnSystem {
+         1 + (t / 60) * BALANCE.spawn.hpPerMinute,
+         1 + (t / 60) * BALANCE.spawn.speedPerMinute,
+       );
++      active++;
+     }
+   }
+ }
+diff --git a/src/systems/UpgradeSystem.ts b/src/systems/UpgradeSystem.ts
+index f12616e..09f5de2 100644
+--- a/src/systems/UpgradeSystem.ts
++++ b/src/systems/UpgradeSystem.ts
+@@ -1,3 +1,4 @@
++import { TALISMAN_CONFIG } from '../talismans/talismanConfig';
+ import { WeaponEvolutionManager } from "../weapons/evolution/WeaponEvolutionManager";
+ import { WEAPON_UPGRADES } from "../data/weaponUpgrades";
+ import type { WeaponLoadout } from "../weapons/WeaponLoadout";
+@@ -9,6 +10,7 @@ export interface UpgradeChoice {
+ }
+ export class UpgradeSystem {
+     levels: Record<string, number> = {};
++    rarityBonus = 0;
+     constructor(private random: () => number = Math.random, readonly loadout?: WeaponLoadout) { if (loadout)
+         this.evolutions = new WeaponEvolutionManager(loadout, this.levels); }
+     readonly evolutions?: WeaponEvolutionManager;
+@@ -25,11 +27,13 @@ export class UpgradeSystem {
+             const i = Math.floor(this.random() * pool.length);
+             const definition = pool.splice(i, 1)[0];
+             const r = this.random() * 100;
++            const common=Math.max(0,BALANCE.rarity.Common-this.rarityBonus*TALISMAN_CONFIG.rarityBonus.commonReduction);
++            const rare=BALANCE.rarity.Rare+this.rarityBonus*TALISMAN_CONFIG.rarityBonus.rareIncrease;
+             choices.push({
+                 definition,
+-                rarity: definition.weaponId ? "Common" : r < BALANCE.rarity.Common
++                rarity: definition.weaponId ? "Common" : r < common
+                     ? "Common"
+-                    : r < BALANCE.rarity.Common + BALANCE.rarity.Rare
++                    : r < common + rare
+                         ? "Rare"
+                         : "Epic",
+             });
+diff --git a/src/talismans/TalismanSession.ts b/src/talismans/TalismanSession.ts
+new file mode 100644
+index 0000000..9afbd1b
+--- /dev/null
++++ b/src/talismans/TalismanSession.ts
+@@ -0,0 +1,52 @@
++import type { PlayerStats } from '../config/balance';
++import { TALISMAN_CONFIG as C } from './talismanConfig';
++import { TALISMANS, neutralModifiers, type TalismanDefinition, type TalismanModifiers } from './talismanDefinitions';
++/** One run's decisions and cached multipliers. No permanent storage or per-frame stat reduction. */
++export class TalismanSession {
++  readonly acceptedIds: string[] = [];
++  readonly rejectedIds: string[] = [];
++  modifiers = neutralModifiers();
++  offered?: TalismanDefinition;
++  private nextEvent = 0;
++  private pending = 0;
++  constructor(private random = Math.random, private times = C.eventTimes, private definitions = TALISMANS) {}
++  update(elapsed:number) {
++    while (this.nextEvent < this.times.length && elapsed >= this.times[this.nextEvent]) {
++      this.nextEvent++; this.pending++;
++    }
++  }
++  trigger() { if (this.remaining.length && !this.offered) this.pending++; }
++  get remaining() { return this.definitions.filter(d => !this.acceptedIds.includes(d.id) && !this.rejectedIds.includes(d.id)); }
++  get ready() { return this.pending > 0 && this.remaining.length > 0 && !this.offered; }
++  offer(id?:string) {
++    if (this.offered || !this.ready) return;
++    const pool=this.remaining;
++    const d=id ? pool.find(d=>d.id===id) : pool[Math.min(pool.length-1,Math.floor(this.random()*pool.length))];
++    if (!d) return;
++    this.pending--; this.offered=d; return d;
++  }
++  decide(accept:boolean) {
++    const d=this.offered;
++    if (!d) return;
++    this.offered=undefined;
++    (accept ? this.acceptedIds : this.rejectedIds).push(d.id);
++    if (accept) {
++      const m={...this.modifiers};
++      for (const e of [...d.curses,...d.rewards]) {
++        if (e.type==='upgradeRarityBonus' || e.type==='extraEliteCount') m[e.type]+=e.value;
++        else m[e.type]*=e.value;
++      }
++      for (const k of Object.keys(C.caps) as (keyof typeof C.caps)[]) m[k]=Math.min(C.caps[k],m[k]);
++      this.modifiers=m;
++    }
++    return d;
++  }
++}
++/** Apply only the change in cached factors, retaining character passives and upgrades. */
++export function applyPlayerTalismanDelta(stats:PlayerStats, before:TalismanModifiers, after:TalismanModifiers) {
++  stats.damage*=after.playerDamageMultiplier/before.playerDamageMultiplier;
++  stats.moveSpeed*=after.playerMoveSpeedMultiplier/before.playerMoveSpeedMultiplier;
++  stats.attackSpeed*=after.attackSpeedMultiplier/before.attackSpeedMultiplier;
++  stats.maxHp=Math.max(1,stats.maxHp*after.playerMaxHpMultiplier/before.playerMaxHpMultiplier);
++  stats.hp=Math.min(stats.hp,stats.maxHp);
++}
+diff --git a/src/talismans/talismanConfig.ts b/src/talismans/talismanConfig.ts
+new file mode 100644
+index 0000000..e30d2ee
+--- /dev/null
++++ b/src/talismans/talismanConfig.ts
+@@ -0,0 +1,9 @@
++import { BALANCE } from '../config/balance';
++export const TALISMAN_CONFIG = {
++  eventTimes: [120, 300, 480] as readonly number[],
++  caps: { enemyMoveSpeedMultiplier: 1.6, attackSpeedMultiplier: 2, enemyMaxCountMultiplier: 2 },
++  // Absolute pooled-entity ceiling, including elites and the two boss objects.
++  enemyHardLimit: 560,
++  rarityBonus: { commonReduction: 15, rareIncrease: 10, epicIncrease: 5 },
++};
++export const talismanEnemyCapacity = () => Math.min(TALISMAN_CONFIG.enemyHardLimit, Math.ceil(BALANCE.limits.enemies * TALISMAN_CONFIG.caps.enemyMaxCountMultiplier));
+diff --git a/src/talismans/talismanDefinitions.ts b/src/talismans/talismanDefinitions.ts
+new file mode 100644
+index 0000000..00d80b6
+--- /dev/null
++++ b/src/talismans/talismanDefinitions.ts
+@@ -0,0 +1,39 @@
++import { TALISMAN_CONFIG } from './talismanConfig';
++import type { TranslationKey } from '../i18n';
++export type TalismanEffectType =
++  | 'enemyMaxCountMultiplier' | 'enemyMoveSpeedMultiplier' | 'enemyDamageMultiplier'
++  | 'enemyHpMultiplier' | 'xpMultiplier' | 'playerDamageMultiplier'
++  | 'playerMoveSpeedMultiplier' | 'attackSpeedMultiplier' | 'bossDamageMultiplier'
++  | 'playerMaxHpMultiplier' | 'eliteRewardMultiplier' | 'upgradeRarityBonus' | 'extraEliteCount';
++export interface TalismanEffect { type: TalismanEffectType; value: number }
++export interface TalismanDefinition {
++  id: string; nameKey: TranslationKey; symbol: string; riskLevel: number;
++  curses: readonly TalismanEffect[]; rewards: readonly TalismanEffect[];
++}
++export const TALISMANS: readonly TalismanDefinition[] = [
++  { id: 'samdo', nameKey: 'talisman.names.samdo', symbol: '三', riskLevel: 3,
++    curses: [{type:'enemyMaxCountMultiplier',value:1.25},{type:'enemyMoveSpeedMultiplier',value:1.1}],
++    rewards: [{type:'xpMultiplier',value:1.35}] },
++  { id: 'gate', nameKey: 'talisman.names.gate', symbol: '鬼', riskLevel: 3,
++    curses: [{type:'enemyDamageMultiplier',value:1.2}],
++    rewards: [{type:'playerDamageMultiplier',value:1.25},{type:'bossDamageMultiplier',value:1.1}] },
++  { id: 'hunger', nameKey: 'talisman.names.hunger', symbol: '餓', riskLevel: 4,
++    curses: [{type:'enemyHpMultiplier',value:1.3}],
++    rewards: [{type:'xpMultiplier',value:1.4},{type:'eliteRewardMultiplier',value:1.3}] },
++  { id: 'trick', nameKey: 'talisman.names.trick', symbol: '妖', riskLevel: 2,
++    curses: [{type:'enemyMoveSpeedMultiplier',value:1.15}],
++    rewards: [{type:'playerMoveSpeedMultiplier',value:1.12},{type:'attackSpeedMultiplier',value:1.1}] },
++  { id: 'reaper', nameKey: 'talisman.names.reaper', symbol: '死', riskLevel: 5,
++    curses: [{type:'playerMaxHpMultiplier',value:.7}],
++    rewards: [{type:'playerDamageMultiplier',value:1.4},{type:'bossDamageMultiplier',value:1.2}] },
++  { id: 'moon', nameKey: 'talisman.names.moon', symbol: '赤', riskLevel: 4,
++    curses: [{type:'enemyMaxCountMultiplier',value:1.35},{type:'extraEliteCount',value:1}],
++    rewards: [{type:'upgradeRarityBonus',value:1},{type:'xpMultiplier',value:1.2}] },
++];
++export type TalismanModifiers = Record<TalismanEffectType, number>;
++export const neutralModifiers = (): TalismanModifiers => ({
++  enemyMaxCountMultiplier:1,enemyMoveSpeedMultiplier:1,enemyDamageMultiplier:1,enemyHpMultiplier:1,
++  xpMultiplier:1,playerDamageMultiplier:1,playerMoveSpeedMultiplier:1,attackSpeedMultiplier:1,
++  bossDamageMultiplier:1,playerMaxHpMultiplier:1,eliteRewardMultiplier:1,upgradeRarityBonus:0,extraEliteCount:0,
++});
++export const effectParams = (e:TalismanEffect) => ({rare:TALISMAN_CONFIG.rarityBonus.rareIncrease*e.value,epic:TALISMAN_CONFIG.rarityBonus.epicIncrease*e.value,value: e.type === 'extraEliteCount' ? e.value : Math.round((e.value-1)*100)});
+diff --git a/src/ui/Hud.ts b/src/ui/Hud.ts
+index 416e2a8..393a0de 100644
+--- a/src/ui/Hud.ts
++++ b/src/ui/Hud.ts
+@@ -44,7 +44,7 @@ export class Hud {
+     );
+   }
+   update(p: Player, l: LevelSystem, elapsed: number, kills: number) {
+-    this.hp.setText(`${Math.ceil(p.stats.hp)} / ${p.stats.maxHp}`);
++    this.hp.setText(`${Math.ceil(p.stats.hp)} / ${Math.ceil(p.stats.maxHp)}`);
+     this.lv.setText(
+       t("hud.level", { level: String(l.level).padStart(2, "0") }),
+     );
+diff --git a/src/ui/TalismanHud.ts b/src/ui/TalismanHud.ts
+new file mode 100644
+index 0000000..d854aeb
+--- /dev/null
++++ b/src/ui/TalismanHud.ts
+@@ -0,0 +1,10 @@
++import type Phaser from 'phaser';
++import {label} from './common';
++import {t} from '../i18n';
++import {TALISMANS} from '../talismans/talismanDefinitions';
++export class TalismanHud {
++  private text:Phaser.GameObjects.Text;
++  private ids:string[]=[];
++  constructor(scene:Phaser.Scene) {this.text=label(scene,36,132,()=>t('talisman.hud',{symbols:this.ids.map(id=>TALISMANS.find(d=>d.id===id)?.symbol??'').join('  ')}),18,'#d8b384').setBackgroundColor('#211a15').setPadding(6).setVisible(false);}
++  refresh(ids:readonly string[]) {this.ids=[...ids];this.text.setText(t('talisman.hud',{symbols:this.ids.slice(0,5).map(id=>TALISMANS.find(d=>d.id===id)?.symbol??'').join('  ')+(this.ids.length>5?' +'+(this.ids.length-5):'')})).setVisible(ids.length>0);}
++}
+diff --git a/src/ui/TalismanPanel.ts b/src/ui/TalismanPanel.ts
+new file mode 100644
+index 0000000..a4402ef
+--- /dev/null
++++ b/src/ui/TalismanPanel.ts
+@@ -0,0 +1,45 @@
++import { t, onLocaleChange } from '../i18n';
++import { effectParams, type TalismanDefinition } from '../talismans/talismanDefinitions';
++/** DOM overlay keeps readable text and >=44 CSS-pixel targets even in a small itch.io iframe. */
++export class TalismanPanel {
++  private root?:HTMLDivElement;
++  private unsubscribe?:()=>void;
++  private callback?:(accept:boolean)=>void;
++  private previousFocus?:HTMLElement;
++  get open() {return !!this.root;}
++  show(d:TalismanDefinition, callback:(accept:boolean)=>void) {
++    this.close();this.callback=callback;this.previousFocus=document.activeElement as HTMLElement;
++    const root=document.createElement('div');this.root=root;
++    root.className='curse-overlay';root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');root.setAttribute('aria-labelledby','curse-title');
++    root.innerHTML=`<style>
++.curse-overlay{position:fixed;inset:0;z-index:1000;background:rgba(9,8,10,.94);display:flex;align-items:safe center;justify-content:center;overflow:auto;padding:16px;box-sizing:border-box;font-family:"Noto Sans KR","Malgun Gothic",Arial,sans-serif;color:#e7d8b7}
++.curse-card{width:min(440px,100%);box-sizing:border-box;border:2px solid #814134;background:linear-gradient(125deg,#302619,#211a15);padding:22px 26px;text-align:center;box-shadow:0 0 48px #762f2940;margin:auto}
++.curse-card h2{font-size:25px;line-height:1.25;margin:8px 0}.curse-card .symbol{font-size:52px;color:#cf6753;line-height:1.15}.curse-card .eyebrow{font-size:13px;color:#ccab7b}.curse-card .risk{color:#e5a064;margin:10px 0 18px}
++.curse-card h3{text-align:left;font-size:15px;margin:15px 0 6px;color:#df8976}.curse-card h3.reward{color:#c9c693}.curse-card ul{text-align:left;list-style:none;margin:0;padding:0;font-size:15px;line-height:1.55}.curse-card li{padding:2px 0}.curse-card .guide{font-size:12px;color:#b9ac95;margin:18px 0}
++.curse-card button{display:block;width:100%;min-height:48px;border:1px solid #b8a16a;background:#762f29;color:#eee0c6;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;margin-top:10px;padding:12px;border-radius:3px;touch-action:manipulation}.curse-card button.reject{background:#242121}.curse-card button:hover,.curse-card button:focus-visible{outline:2px solid #d7bc79;outline-offset:2px}
++@media(max-height:540px){.curse-card{padding:12px 20px}.curse-card .symbol{font-size:30px}.curse-card .risk{margin:6px}.curse-card h3{margin-top:8px}.curse-card .guide{margin:10px 0}}
++</style><section class="curse-card"><div class="eyebrow"></div><div class="symbol"></div><h2 id="curse-title"></h2><div class="risk"></div><h3 class="curse-heading"></h3><ul class="curses"></ul><h3 class="reward"></h3><ul class="rewards"></ul><p class="guide"></p><button class="accept"></button><button class="reject"></button></section>`;
++    document.body.append(root);
++    const set=(selector:string,text:string)=>{root.querySelector(selector)!.textContent=text;};
++    const render=()=>{
++      set('.eyebrow',t('talisman.title'));set('.symbol',d.symbol);set('h2',t(d.nameKey));
++      set('.risk',t('talisman.risk',{stars:'★'.repeat(d.riskLevel)+'☆'.repeat(5-d.riskLevel)}));
++      set('.curse-heading',t('talisman.curses'));set('.reward',t('talisman.rewards'));set('.guide',t('talisman.guide'));
++      set('.accept',t('talisman.accept'));set('.reject',t('talisman.reject'));
++      for (const [selector,effects] of [['.curses',d.curses],['.rewards',d.rewards]] as const) {
++        const ul=root.querySelector(selector)!;ul.replaceChildren();
++        for (const e of effects) {const li=document.createElement('li');li.textContent=t(`talisman.effects.${e.type}`,effectParams(e));ul.append(li);}
++      }
++    };
++    render();this.unsubscribe=onLocaleChange(render);
++    root.querySelector('.accept')!.addEventListener('click',()=>this.select(true));
++    root.querySelector('.reject')!.addEventListener('click',()=>this.select(false));
++    root.addEventListener('keydown',event=>{
++      if (['1','2','Escape'].includes(event.key)) {event.preventDefault();event.stopPropagation();if(event.repeat)return;this.select(event.key==='1');}
++      if(event.key==='Tab'){const buttons=Array.from(root.querySelectorAll('button'));if(event.shiftKey&&document.activeElement===buttons[0]){event.preventDefault();buttons[1].focus();}else if(!event.shiftKey&&document.activeElement===buttons[1]){event.preventDefault();buttons[0].focus();}}
++    });
++    (root.querySelector('.accept') as HTMLButtonElement).focus();
++  }
++  select(accept:boolean) {if(!this.open)return;const fn=this.callback;this.close();fn?.(accept);}
++  close() {this.unsubscribe?.();this.unsubscribe=undefined;this.root?.remove();this.root=undefined;this.callback=undefined;this.previousFocus?.focus();this.previousFocus=undefined;}
++}
+diff --git a/src/utils/Pool.ts b/src/utils/Pool.ts
+index 62ac7cc..2cda879 100644
+--- a/src/utils/Pool.ts
++++ b/src/utils/Pool.ts
+@@ -7,9 +7,19 @@ export class Pool<T extends Poolable> {
+   constructor(
+     private create: () => T,
+     readonly capacity: number,
++    private activeLimit?: () => number,
+   ) {}
+   acquire(): T | undefined {
+-    for (const item of this.items) if (!item.active && item.poolEligible !== false) return item;
++    if (this.activeLimit) {
++      let active=0;
++      let reusable:T|undefined;
++      for(const item of this.items) {
++        if(item.active)active++;
++        else if(!reusable && item.poolEligible !== false)reusable=item;
++      }
++      if(active>=this.activeLimit())return;
++      if(reusable)return reusable;
++    } else for (const item of this.items) if (!item.active && item.poolEligible !== false) return item;
+     if (this.items.length >= this.capacity) return;
+     const item = this.create();
+     this.items.push(item);
+diff --git a/src/weapons/WeaponSystem.ts b/src/weapons/WeaponSystem.ts
+index 7a4a0d0..69ca8d0 100644
+--- a/src/weapons/WeaponSystem.ts
++++ b/src/weapons/WeaponSystem.ts
+@@ -100,7 +100,7 @@ export class WeaponSystem {
+         if (!e.active)
+             return;
+         const crit = Math.random() < this.player.stats.criticalChance;
+-        const value = base * this.player.stats.damage / BALANCE.player.damage * (crit ? BALANCE.criticalMultiplier : 1);
++        const value = base * this.player.stats.damage / BALANCE.player.damage * (crit ? BALANCE.criticalMultiplier : 1) * (e.rank === "boss" ? this.player.bossDamageMultiplier : 1);
+         e.hp -= value;
+         e.setTintFill(0xffffff);
+         e.flash = .07;
+@@ -112,7 +112,7 @@ export class WeaponSystem {
+             return false;
+         this.hits[b.source] = (this.hits[b.source] ?? 0) + 1;
+         const x = e.x, y = e.y;
+-        this.onDamage(e, b.damage, b.critical, b.source);
++        this.onDamage(e, this.collision.lastDamage, b.critical, b.source);
+         if (b.source === 'thunder-talisman') {
+             // Bounded nearest hops. Secondary strikes do not recursively trigger chains.
+             let cx = x, cy = y;
+diff --git a/tests/bosses-browser.mjs b/tests/bosses-browser.mjs
+index a505f57..39ddeab 100644
+--- a/tests/bosses-browser.mjs
++++ b/tests/bosses-browser.mjs
+@@ -6,6 +6,8 @@ try{
+  browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE_PATH||undefined,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+  const page=await browser.newPage({viewport:{width:1280,height:800}}),errors=[],missing=[];page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.status()===404)missing.push(r.url());});
+  await page.goto('http://127.0.0.1:5177');await page.waitForFunction(()=>window.__SURVIVOR_GAME__?.scene.isActive('Menu'));await page.keyboard.press('Enter');await page.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.isActive('CharacterSelect'));await page.keyboard.press('Enter');await page.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.isActive('Game'));
++ // Isolate legacy boss-pattern regression tests; mixed modal ordering is covered by talismans-browser.
++ await page.evaluate(async()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');s.talismans.times=[];s.events.on('create',()=>{s.talismans.times=[];});const {setLocale}=await import('/src/i18n/index.ts');setLocale('ko');});
+  const elite=await page.evaluate(()=>{
+   const s=window.__SURVIVOR_GAME__.scene.getScene('Game');s.paused=true;s.physics.pause();for(const e of s.enemies.items)e.disableBody(true,true);
+   s.elapsed=119.99;s.encounters.update(s.elapsed);const before=s.enemies.items.filter(e=>e.active&&e.rank==='elite').length;
+diff --git a/tests/browser-smoke.mjs b/tests/browser-smoke.mjs
+index 9108003..175a890 100644
+--- a/tests/browser-smoke.mjs
++++ b/tests/browser-smoke.mjs
+@@ -174,6 +174,7 @@ try {
+   await page.keyboard.press("Escape", { delay: 100 });
+   await page.evaluate(() => {
+     const s = window.__SURVIVOR_GAME__.scene.getScene("Game");
++    s.talismans.times = []; // Modal timeline is covered by talismans-browser.
+     s.elapsed = 305;
+     s.player.stats.hp = 100;
+     s.player.invulnerable = 10;
+@@ -220,14 +221,14 @@ try {
+     100,
+   );
+   await page.evaluate(
+-    () => (window.__SURVIVOR_GAME__.scene.getScene("Game").elapsed = 599.98),
++    () => { const s=window.__SURVIVOR_GAME__.scene.getScene("Game"); s.talismans.times=[]; s.elapsed=599.98; },
+   );
+   await page.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.getScene('Game').bosses.spawnedIds.has('ghost-king'));
+   await page.evaluate(()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');s.levels.pending=0;s.panel.close();for(const e of s.enemies.items)if(e.active&&e.rank==='boss'&&e.definition.id==='ghost-king')s.weapons.strike(e,1000000,'arc-bolt');s.paused=false;s.physics.resume();});
+   await page.waitForFunction(() =>
+     window.__SURVIVOR_GAME__.scene.isActive("GameOver"),
+   );
+-  await page.mouse.click(640, 593);
++  await page.mouse.click(640, 649);
+   await page.waitForFunction(() =>
+     window.__SURVIVOR_GAME__.scene.isActive("Menu"),
+   );
+diff --git a/tests/encounters.test.ts b/tests/encounters.test.ts
+index 9e871aa..fa29284 100644
+--- a/tests/encounters.test.ts
++++ b/tests/encounters.test.ts
+@@ -51,6 +51,6 @@ test('boss statistics persist and malformed/older saves stay compatible',()=>{
+ test('reserved boss actors cannot be acquired by normal spawn pools; boss spawn multiplier lowers frequency',async()=>{
+  const {Pool}=await import('../src/utils/Pool');const {EnemySpawnSystem}=await import('../src/systems/EnemySpawnSystem');
+  const p=new Pool<{active:boolean;poolEligible:boolean}>(()=>({active:true,poolEligible:true}),3);const boss={active:false,poolEligible:false};p.items.push(boss);assert.notEqual(p.acquire(),boss);
+- const count=(rate:number)=>{let n=0;const spawner=new EnemySpawnSystem({acquire:()=>({spawn:()=>n++})} as never);for(let i=0;i<100;i++)spawner.update(.1,0,1800,1800,rate);return n;};
++ const count=(rate:number)=>{let n=0;const spawner=new EnemySpawnSystem({items:[],acquire:()=>({spawn:()=>n++})} as never);for(let i=0;i<100;i++)spawner.update(.1,0,1800,1800,rate);return n;};
+  const normal=count(1),duringBoss=count(.6);assert.ok(duringBoss<normal&&duringBoss/normal>.5&&duringBoss/normal<.75);
+ });
+diff --git a/tests/talismans-browser.mjs b/tests/talismans-browser.mjs
+new file mode 100644
+index 0000000..cb5b8bb
+--- /dev/null
++++ b/tests/talismans-browser.mjs
+@@ -0,0 +1,82 @@
++import {chromium} from '@playwright/test';
++import {createServer} from 'vite';
++import assert from 'node:assert/strict';
++import {mkdir} from 'node:fs/promises';
++const server=await createServer({server:{host:'127.0.0.1',port:5181}});await server.listen();let browser;
++const approx=(a,b)=>assert.ok(Math.abs(a-b)<1e-6,`${a} != ${b}`);
++try{
++ browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE_PATH||undefined,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
++ const page=await browser.newPage({viewport:{width:1280,height:800}}),errors=[];
++ page.on('pageerror',e=>errors.push(e.message));
++ await page.goto('http://127.0.0.1:5181');await page.waitForFunction(()=>window.__SURVIVOR_GAME__?.scene.isActive('Menu'));
++ await page.keyboard.press('Enter');await page.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.isActive('CharacterSelect'));await page.keyboard.press('Enter');await page.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.isActive('Game'));
++ const restart=async()=>{await page.evaluate(()=>window.__SURVIVOR_GAME__.scene.getScene('Game').scene.restart());await page.waitForTimeout(140);await page.evaluate(()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');s.player.invulnerable=99999;s.player.stats.criticalChance=0;});};
++ const offer=async id=>{await page.evaluate(id=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');s.paused=false;s.triggerTalismanEvent(id);},id);await page.waitForSelector('.curse-overlay');};
++ await page.evaluate(async()=>{const {setLocale}=await import('/src/i18n/index.ts');setLocale('ko');});
++ await mkdir('talisman-previews',{recursive:true});
++ const observed=[];
++ for(const id of ['samdo','gate','hunger','trick','reaper','moon']){
++  console.log('testing',id);await restart();
++  const before=await page.evaluate(()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');s.paused=true;s.physics.pause();const e=s.enemies.acquire();window.__testEnemy=e;e.spawn(s.player.x+120,s.player.y,'grunt',1,1);const b=s.bolts.acquire();b.fire(s.player.x,s.player.y,0,400,10,0,false,5);return {enemy:{hp:e.hp,speed:e.speed,damage:e.damage,xp:e.xp},stats:{...s.player.stats},elapsed:s.elapsed};});
++  await offer(id);
++  const frozen=await page.evaluate(()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');return {elapsed:s.elapsed,x:s.player.x,enemy:s.enemies.items.filter(e=>e.active).map(e=>[e.x,e.y,e.hp]),bolts:s.bolts.items.filter(e=>e.active).map(e=>[e.x,e.y,e.ttl]),time:s.bosses.states.map(e=>e.slash)};});
++  await page.waitForTimeout(160);assert.deepEqual(await page.evaluate(()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');return {elapsed:s.elapsed,x:s.player.x,enemy:s.enemies.items.filter(e=>e.active).map(e=>[e.x,e.y,e.hp]),bolts:s.bolts.items.filter(e=>e.active).map(e=>[e.x,e.y,e.ttl]),time:s.bosses.states.map(e=>e.slash)};}),frozen);
++  if(id==='samdo')await page.screenshot({path:'talisman-previews/desktop-ko.png'});
++  const result=await page.evaluate(()=>{document.querySelector('.accept').click();const s=window.__SURVIVOR_GAME__.scene.getScene('Game');const resumed=!s.physics.world.isPaused&&!s.talismanPanel.open;s.paused=true;s.physics.pause();return {resumed,m:s.talismans.modifiers,stats:{...s.player.stats},enemy:{hp:window.__testEnemy.hp,speed:window.__testEnemy.speed,damage:window.__testEnemy.damage},ids:s.talismans.acceptedIds};});
++  assert.ok(result.resumed);assert.deepEqual(result.ids,[id]);
++  approx(result.stats.damage,before.stats.damage*result.m.playerDamageMultiplier);approx(result.stats.moveSpeed,before.stats.moveSpeed*result.m.playerMoveSpeedMultiplier);approx(result.stats.attackSpeed,before.stats.attackSpeed*result.m.attackSpeedMultiplier);approx(result.stats.maxHp,before.stats.maxHp*result.m.playerMaxHpMultiplier);assert.ok(result.stats.hp>0&&result.stats.hp<=result.stats.maxHp);
++  approx(result.enemy.hp,before.enemy.hp*result.m.enemyHpMultiplier);approx(result.enemy.speed,before.enemy.speed*result.m.enemyMoveSpeedMultiplier);approx(result.enemy.damage,before.enemy.damage*result.m.enemyDamageMultiplier);
++  const combat=await page.evaluate(()=>{
++   const s=window.__SURVIVOR_GAME__.scene.getScene('Game');const e=s.enemies.acquire();e.spawn(s.player.x,s.player.y,'grunt',1,1);const spawn={hp:e.hp,speed:e.speed,damage:e.damage};
++   for(const o of s.orbs.items)o.setActive(false).setVisible(false);s.weapons.strike(e,100000,'arc-bolt');const orb=s.orbs.items.find(o=>o.active);for(const o of s.orbs.items)if(o!==orb)o.setActive(false).setVisible(false);const value=orb.value;orb.setPosition(s.player.x,s.player.y);const xp=s.levels.xp;s.updateOrbs(.01);const xpGain=s.levels.xp-xp; // base XP is below level threshold
++   s.bosses.spawnBoss('vengeful-general');const b=s.bosses.activeBosses[0];const bossSpawn={hp:b.hp,speed:b.speed,damage:b.damage};const hp=b.hp;s.weapons.strike(b,10,'arc-bolt');const strike=hp-b.hp;
++   const bolt=s.bolts.acquire();bolt.fire(s.player.x,s.player.y,0,0,10,0,false,5);const hp2=b.hp;s.weapons.hit(bolt,b);const projectile=hp2-b.hp;
++   const eliteBase=s.enemies.items.find(e=>e.active&&e.rank==='normal');if(eliteBase)eliteBase.disableBody(true,true);
++   s.elites.spawn('night-elite',1,0);const elite=s.enemies.items.find(e=>e.active&&e.rank==='elite');const eliteXp=elite.xp;s.weapons.strike(elite,100000,'arc-bolt');const dropped=s.orbs.items.find(o=>o.active);
++   // Global XP and elite bonus each apply exactly once.
++   const eliteValue=dropped.value;
++   return {spawn,bossSpawn,strike,projectile,value,xpGain,eliteXp,eliteValue};
++  });
++  approx(combat.xpGain,combat.value*result.m.xpMultiplier);approx(combat.strike,10*result.stats.damage/22*result.m.bossDamageMultiplier);approx(combat.projectile,10*result.m.bossDamageMultiplier);approx(combat.eliteValue,combat.eliteXp*result.m.eliteRewardMultiplier);
++  observed.push({id,modifiers:result.m,combat});
++ }
++ console.log("six complete");
++ // Real scheduled timing, stacking and rejected candidates.
++ await restart();await page.evaluate(()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');s.talismans.random=()=>0;s.elapsed=119.99;s.update(0,20);});await page.waitForSelector('.curse-overlay');assert.equal(await page.evaluate(()=>window.__SURVIVOR_GAME__.scene.getScene('Game').talismans.offered.id),'samdo');
++ await page.keyboard.press('2');assert.equal(await page.evaluate(()=>window.__SURVIVOR_GAME__.scene.getScene('Game').talismans.rejectedIds[0]),'samdo');
++ await offer('gate');await page.locator('.accept').click();await offer('reaper');await page.locator('.accept').click();
++ const stacked=await page.evaluate(()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');s.paused=true;s.physics.pause();return {...s.player.stats,boss:s.player.bossDamageMultiplier,ids:[...s.talismans.acceptedIds]};});approx(stacked.damage,22*1.05*1.25*1.4);approx(stacked.boss,1.1*1.2);assert.equal(stacked.maxHp,70);
++ await restart();for(const id of ['samdo','moon','hunger']){await offer(id);await page.locator('.accept').click();}
++ approx(await page.evaluate(()=>window.__SURVIVOR_GAME__.scene.getScene('Game').talismans.modifiers.xpMultiplier),2.268);
++ console.log("stacking complete");
++ // Existing upgrade remains open; queued talisman precedes subsequent levels and boss rewards.
++ await restart();await page.evaluate(()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');s.levels.pending=2;s.showUpgrade();s.triggerTalismanEvent('trick');});assert.equal(await page.locator('.curse-overlay').count(),0);
++ await page.evaluate(()=>window.__SURVIVOR_GAME__.scene.getScene('Game').panel.select(0));await page.waitForSelector('.curse-overlay');
++ await page.evaluate(()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');s.pendingRewards.push('vengeful-general');s.levels.pending++;});
++ await page.locator('.reject').click();assert.ok(await page.evaluate(()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');return s.panel.open&&s.panel.choices.some(c=>c.definition.bossRewardId);}));
++ await page.evaluate(()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');const souls=s.panel.choices.findIndex(c=>c.definition.bossRewardId==='souls');s.panel.select(souls>=0?souls:0);});assert.ok(await page.evaluate(()=>window.__SURVIVOR_GAME__.scene.getScene('Game').panel.open));
++ await page.evaluate(()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');let guard=20;while(s.panel.open&&guard--)s.panel.select(0);});assert.equal(await page.evaluate(()=>window.__SURVIVOR_GAME__.scene.getScene('Game').physics.world.isPaused),false);
++ console.log("queue complete");
++ // Red moon adds elites only to future encounters; enforce count and absolute performance ceiling.
++ await restart();await offer('moon');await page.locator('.accept').click();
++ const spawn=await page.evaluate(()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');s.talismans.times=[];s.elapsed=120;s.player.invulnerable=99999;s.update(0,1);s.paused=true;s.physics.pause();const elites=s.enemies.items.filter(e=>e.active&&e.rank==='elite').length;for(const e of s.enemies.items)if(e.rank!=='boss')e.disableBody(true,true);const random=Math.random;Math.random=()=>.5;for(let i=0;i<600;i++)s.spawn.update(1,600,s.player.x,s.player.y);Math.random=random;return {elites,active:s.enemies.items.filter(e=>e.active).length,capacity:s.enemies.capacity};});assert.equal(spawn.elites,2);assert.ok(spawn.active<=560&&spawn.capacity===560);
++ console.log("pool complete");
++ // Retry, menu/new game, death, victory, scene restart all create neutral sessions.
++ for(const won of [false,true]){
++  await restart();await offer('reaper');await page.locator('.accept').click();
++  if(won)await page.evaluate(()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');s.bosses.spawnBoss('ghost-king');s.weapons.strike(s.bosses.activeBosses[0],1000000,'arc-bolt');});
++  else await page.evaluate(()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');s.player.invulnerable=0;s.hurtPlayer(10000);});
++  await page.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.isActive('GameOver'));assert.deepEqual(await page.evaluate(()=>window.__SURVIVOR_GAME__.scene.getScene('GameOver').scene.settings.data.talismanIds),['reaper']);
++  assert.ok(await page.evaluate(()=>window.__SURVIVOR_GAME__.scene.getScene('GameOver').children.list.some(o=>o.type==='Text'&&o.text.includes('저승사자'))));
++  if(won)await page.screenshot({path:'talisman-previews/victory.png'});
++  await page.keyboard.press('Enter');await page.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.isActive('Game'));
++  const reset=await page.evaluate(()=>{const s=window.__SURVIVOR_GAME__.scene.getScene('Game');return {stats:s.player.stats,m:s.talismans.modifiers,ids:s.talismans.acceptedIds,boss:s.player.bossDamageMultiplier,rarity:s.upgrades.rarityBonus};});assert.equal(reset.stats.maxHp,100);approx(reset.stats.damage,22*1.05);assert.equal(reset.m.xpMultiplier,1);assert.equal(reset.m.enemyHpMultiplier,1);assert.equal(reset.m.enemyDamageMultiplier,1);assert.equal(reset.m.enemyMoveSpeedMultiplier,1);assert.equal(reset.m.enemyMaxCountMultiplier,1);assert.equal(reset.m.eliteRewardMultiplier,1);assert.equal(reset.boss,1);assert.equal(reset.rarity,0);assert.deepEqual(reset.ids,[]);
++ }
++ await page.evaluate(()=>window.__SURVIVOR_GAME__.scene.getScene('Game').scene.start('Menu'));await page.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.isActive('Menu'));await page.keyboard.press('Enter');await page.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.isActive('CharacterSelect'));await page.keyboard.press('Enter');await page.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.isActive('Game'));assert.equal(await page.evaluate(()=>window.__SURVIVOR_GAME__.scene.getScene('Game').talismans.acceptedIds.length),0);
++ console.log("reset complete");
++ // Mobile portrait and landscape, touch, translated text and >=44 actual CSS pixel buttons.
++ const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,locale:'ko-KR'});mobile.on('pageerror',e=>errors.push(e.message));await mobile.goto('http://127.0.0.1:5181');await mobile.waitForFunction(()=>window.__SURVIVOR_GAME__?.scene.isActive('Menu'));await mobile.evaluate(()=>window.__SURVIVOR_GAME__.scene.getScene('Menu').scene.start('Game'));await mobile.waitForFunction(()=>window.__SURVIVOR_GAME__.scene.isActive('Game'));await mobile.evaluate(()=>window.__SURVIVOR_GAME__.scene.getScene('Game').triggerTalismanEvent('hunger'));await mobile.waitForSelector('.curse-overlay');
++ await mobile.screenshot({path:'talisman-previews/mobile-ko.png'});const bounds=await mobile.locator('.accept').boundingBox();assert.ok(bounds.height>=44&&bounds.x>=0&&bounds.x+bounds.width<=390);await mobile.locator('.accept').tap();assert.equal(await mobile.locator('.curse-overlay').count(),0);
++ await mobile.setViewportSize({width:844,height:390});await mobile.evaluate(async()=>{const {setLocale}=await import('/src/i18n/index.ts');setLocale('en');window.__SURVIVOR_GAME__.scene.getScene('Game').triggerTalismanEvent('moon');});await mobile.waitForSelector('.curse-overlay');await mobile.locator('.reject').scrollIntoViewIfNeeded();await mobile.screenshot({path:'talisman-previews/mobile-landscape-en.png'});await mobile.locator('.reject').tap();assert.equal(await mobile.locator('.curse-overlay').count(),0);
++ assert.deepEqual(errors,[]);console.log(JSON.stringify({success:true,individual:observed.map(x=>x.id),pause:true,stacking:true,queue:true,boss:true,retry:true,menu:true,mobile:true,spawn,errors},null,2));
++}finally{await browser?.close();await server.close();}
+diff --git a/tests/talismans.test.ts b/tests/talismans.test.ts
+new file mode 100644
+index 0000000..36b7215
+--- /dev/null
++++ b/tests/talismans.test.ts
+@@ -0,0 +1,42 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import {TalismanSession,applyPlayerTalismanDelta} from '../src/talismans/TalismanSession';
++import {TALISMANS,neutralModifiers,type TalismanDefinition} from '../src/talismans/talismanDefinitions';
++import {TALISMAN_CONFIG as C,talismanEnemyCapacity} from '../src/talismans/talismanConfig';
++import {BALANCE} from '../src/config/balance';
++import {UpgradeSystem} from '../src/systems/UpgradeSystem';
++import {WeaponLoadout} from '../src/weapons/WeaponLoadout';
++test('timeline triggers once; modal decisions exhaust candidates, including rejection',()=>{
++ const s=new TalismanSession(()=>0);s.update(119.9);assert.equal(s.ready,false);s.update(120);const first=s.offer();assert.equal(first?.id,'samdo');s.update(120);assert.equal(s.offer(),undefined);s.decide(false);assert.equal(s.ready,false);assert.equal(s.remaining.some(d=>d.id==='samdo'),false);s.update(480);
++ assert.equal(s.offer()?.id,'gate');s.decide(true);assert.equal(s.offer()?.id,'hunger');s.decide(false);assert.equal(s.ready,false);
++ s.update(9999);assert.equal(s.ready,false);assert.equal(new TalismanSession().acceptedIds.length,0);
++});
++test('all six pacts have both penalties and rewards; multiplicative stacking and healthy HP clamp',()=>{
++ const s=new TalismanSession();const stats={...BALANCE.player};
++ for(const d of TALISMANS){assert.ok(d.curses.length&&d.rewards.length);s.trigger();assert.equal(s.offer(d.id),d);const before=s.modifiers;s.decide(true);applyPlayerTalismanDelta(stats,before,s.modifiers);}
++ assert.ok(Math.abs(s.modifiers.enemyMaxCountMultiplier-1.6875)<1e-9);
++ assert.ok(Math.abs(s.modifiers.enemyMoveSpeedMultiplier-1.265)<1e-9);
++ assert.ok(Math.abs(s.modifiers.xpMultiplier-2.268)<1e-9);
++ assert.ok(Math.abs(stats.damage-BALANCE.player.damage*1.25*1.4)<1e-9);
++ assert.equal(stats.maxHp,70);assert.equal(stats.hp,70);assert.equal(s.modifiers.extraEliteCount,1);
++ s.trigger();assert.equal(s.ready,false);assert.equal(s.decide(true),undefined);
++});
++test('configured safety caps stop multiplicative runaway; sub-1HP max is kept alive',()=>{
++ const defs:TalismanDefinition[]=Array.from({length:3},(_,i)=>({...TALISMANS[0],id:String(i),curses:[{type:'enemyMoveSpeedMultiplier',value:2},{type:'enemyMaxCountMultiplier',value:5}],rewards:[{type:'attackSpeedMultiplier',value:4}]}));
++ const s=new TalismanSession(()=>0,C.eventTimes,defs);for(const d of defs){s.trigger();s.offer(d.id);s.decide(true);}
++ assert.equal(s.modifiers.enemyMoveSpeedMultiplier,C.caps.enemyMoveSpeedMultiplier);assert.equal(s.modifiers.enemyMaxCountMultiplier,2);assert.equal(s.modifiers.attackSpeedMultiplier,2);assert.equal(talismanEnemyCapacity(),560);
++ const stats={...BALANCE.player,maxHp:1,hp:1};applyPlayerTalismanDelta(stats,neutralModifiers(),{...neutralModifiers(),playerMaxHpMultiplier:.7});assert.equal(stats.hp,1);assert.equal(stats.maxHp,1);
++});
++test('red moon increases existing stat-card rarity thresholds and preserves weapon/evolution rules',()=>{
++ const normal=new UpgradeSystem(()=>.6);assert.ok(normal.roll().every(c=>c.rarity==='Common'));
++ const moon=new UpgradeSystem(()=>.6);moon.rarityBonus=1;assert.ok(moon.roll().every(c=>c.rarity==='Rare'));
++ const epic=new UpgradeSystem(()=>.92);epic.rarityBonus=1;assert.ok(epic.roll().every(c=>c.rarity==='Epic'));
++ const weapons=new UpgradeSystem(()=>.999,new WeaponLoadout());weapons.rarityBonus=1;assert.ok(weapons.roll().filter(c=>c.definition.weaponId).every(c=>c.rarity==='Common'));
++});
++
++test('pool applies live active limit even to reused objects and reserves boss identities',async()=>{
++ const {Pool}=await import('../src/utils/Pool');let limit=1;
++ const pool=new Pool<{active:boolean;poolEligible:boolean}>(()=>({active:true,poolEligible:true}),4,()=>limit);
++ const first=pool.acquire()!;assert.equal(pool.acquire(),undefined);first.active=false;assert.equal(pool.acquire(),first);first.active=true;
++ limit=2;assert.ok(pool.acquire());assert.equal(pool.acquire(),undefined);
++});

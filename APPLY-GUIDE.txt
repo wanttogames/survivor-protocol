@@ -1,32 +1,29 @@
-귀야 / GUIYA 한국어·영어 업데이트 적용 안내
+저주·부적 시스템 변경 파일 적용 안내
 
-이 ZIP은 수정 파일 17개만 제공합니다. 기존 프로젝트를 삭제하거나 처음부터 다시 만들지 마세요.
-작업 환경의 기존 월하촌/제한 충돌 구현이 포함된 프로젝트 사본에서 작업했습니다.
-C:\work\survivor-protocol에 직접 접근하거나 GitHub/Cloudflare에 반영한 것은 아닙니다.
+기준 저장소: wanttogames/survivor-protocol
+기준 커밋: 23120dcbbe9f237ccd482b882eecb16768dee880
+Windows 원본 폴더를 직접 수정한 것이 아니라 연결된 저장소의 사본에서 구현·검증했습니다.
+멈춘 Work의 미커밋 변경사항은 이 묶음에 포함되어 있지 않을 수 있습니다.
 
-1. 기존 프로젝트를 백업하세요.
-2. src, tests, index.html, package.json, README.md를 C:\work\survivor-protocol의 같은 경로에 병합하세요.
-   기존 폴더를 삭제하지 마세요. 같은 파일에 로컬에서 별도 작업했다면 비교 후 병합하세요.
-   정확한 파일 목록과 해시는 FILES.txt / FILES-SHA256.txt에 있습니다.
-3. npm install → npm run build → npm test를 실행하세요. 신규 런타임 라이브러리는 없습니다.
-4. 기존 Vite 서버를 종료하고 npm run dev로 재시작하세요. 출력된 Local 주소에 접속해 Ctrl+Shift+R 하세요.
-5. 메인 메뉴 오른쪽 위에서 한국어 / English를 선택하면 페이지 새로고침 없이 변경됩니다. 선택된 언어는 대괄호와 테두리로 표시됩니다.
-6. 한국 브라우저에서 기존 선택이 없다면 한국어, 나머지는 영어입니다. 한번 선택하면 다음 접속에서도 유지됩니다.
-   브라우저 자동 감지를 다시 확인할 때는 개발자 콘솔에서 아래 locale 키만 삭제하고 새로고침하세요.
-   localStorage.removeItem('survivor-protocol.locale')
-   localStorage 전체를 clear하지 마세요. 진행도와 오디오 설정까지 삭제될 수 있습니다.
-7. 자동 브라우저 테스트는 npm run test:locale로 실행합니다. Chromium이 없다면 npx playwright install chromium을 실행하세요.
-   기존 진화/캐릭터/보스/전체 플레이 테스트도 통과했습니다.
-8. 배포 시 build/preview를 확인한 뒤 기존 저장소에 수정 파일을 커밋/푸시하세요. 이 ZIP은 자동 배포되지 않습니다.
+1. ZIP을 프로젝트 바깥의 새 폴더에 압축 해제합니다.
+2. PowerShell에서 압축 해제 폴더로 이동합니다.
+3. 다음 명령을 실행합니다.
+   powershell -ExecutionPolicy Bypass -File .\APPLY.ps1 -ProjectPath "C:\work\survivor-protocol"
+4. 적용 후 프로젝트에서 다음을 실행합니다.
+   npm run build
+   npm test
+   npm run dev
 
-언어 우선순위: 저장된 ko/en → navigator.language가 ko 또는 ko-* → 나머지/실패는 en.
-저장 키: survivor-protocol.locale. 자동 감지는 저장하지 않고 직접 선택만 저장합니다.
-저장소가 차단되어도 게임과 현재 세션의 언어 선택은 작동합니다. 이 경우 재접속 시 선택 복구는 불가능합니다.
-진행도/캐릭터 해금/선택 캐릭터/음소거 설정은 보존합니다.
+APPLY.ps1은 모든 대상 파일의 SHA256을 먼저 검사합니다.
+로컬 파일이 기준 버전 또는 이미 적용된 버전과 다르면 복사를 시작하지 않고 중단합니다.
+이 경우 payload를 무조건 덮어쓰지 말고 충돌한 파일을 비교·병합해야 합니다.
+정상 적용 시 기존 파일은 프로젝트의 talisman-backups 아래에 백업합니다.
 
-검증: 단위 40/40, locale/evolution/characters/bosses/browser PASS, npm run build PASS.
-한·영 메뉴/캐릭터/HUD/맵/기본 무기 30단계/진화 6종/강화 카드/보스 보상/결과/해금 알림/Retry를 확인했습니다.
-긴 영어 카드 제목 크기와 결과 화면 간격을 조정했습니다.
-locale-previews에 한·영 스크린샷을 포함했습니다. 테스트 오류/번역 누락 경고 없음.
-실제 itch.io iframe 업로드는 아직 테스트하지 않았습니다. 저장소 차단은 Chromium SecurityError 주입으로 검증했습니다.
-빌드는 기존 Phaser 대형 JS 청크 권고 경고만 있습니다.
+수동 병합할 때 변경 파일 목록은 FILES.txt, 기준 해시는 manifest.json을 확인합니다.
+node_modules, 기존 음원, 기존 에셋은 포함하지 않았습니다. 의존성 추가는 없습니다.
+
+개발 모드 즉시 확인 (브라우저 개발자도구 Console):
+window.__SURVIVOR_GAME__.scene.getScene('Game').triggerTalismanEvent('samdo')
+사용 가능한 id: samdo, gate, hunger, trick, reaper, moon
+일시정지와 기존 카드 UI를 닫은 상태에서 호출합니다.
+프로덕션 빌드에는 디버그 버튼과 window.__SURVIVOR_GAME__ 노출이 없습니다.

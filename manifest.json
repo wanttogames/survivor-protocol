@@ -1,0 +1,127 @@
+[
+  {
+    "path": "package.json",
+    "beforeSha256": "25929e6cdd950e6251c824891c0f38a7a517faa35dab2ddb393652aad2903bc8",
+    "afterSha256": "656e4dc3017913e70142116f6d12403b985c546943f58ca5c65af65a95cd33ca"
+  },
+  {
+    "path": "src/bosses/Boss.ts",
+    "beforeSha256": "c64a4eed9fc160b22b0d0f222ed5f0aa89b5e12f64864894219198a48f7ebbc7",
+    "afterSha256": "dc8a33d653cba9102e8a39b93798c2bf04676ad97511184f0a9fb162f9bde15f"
+  },
+  {
+    "path": "src/bosses/BossManager.ts",
+    "beforeSha256": "b6c7da04c0735fd8783a39443aec0b2529a879336a2d591a85e606cc8fa284bc",
+    "afterSha256": "2a5b8e17e5e08576a7eb4564549c52a4a1bdcd007d36d1f2edf395c66e7fb928"
+  },
+  {
+    "path": "src/entities/Enemy.ts",
+    "beforeSha256": "34c3d352b09ea2e7e7607e8eef66a91d022bc21f0ba115eb9180a086b8432fa4",
+    "afterSha256": "06c646503a0d0e0fcc926a01aee2f577ab251726324469c36905df8065b0c458"
+  },
+  {
+    "path": "src/entities/Player.ts",
+    "beforeSha256": "7fa80d91411c1e16d17ca1fbfbbe140c7eae8f513c4f8c90b430ff97766945f3",
+    "afterSha256": "53e5c885f7de094100cc32dbc7114942e48649317a05ad12e47c8ccecc71b1c4"
+  },
+  {
+    "path": "src/i18n/en.ts",
+    "beforeSha256": "54f0cd403e2e316d11b4dafaa299d611dfc74ebf150ab3802fda039ecbbefc58",
+    "afterSha256": "af6e7743d1e35143c6403ab97c9d2c6c642831b4ab118ae8c730befb77048441"
+  },
+  {
+    "path": "src/i18n/ko.ts",
+    "beforeSha256": "79deec12391829667cfce221e2808889ab421e70a13869f428ec325d9c6b1f6f",
+    "afterSha256": "9b667ec3068413a74f79f959af7bfbc0bcffee08268de9ad59450a49d5e5f5af"
+  },
+  {
+    "path": "src/scenes/GameOverScene.ts",
+    "beforeSha256": "77e1b321bf964b8606785618449ff9dc6a299dedc05574dc5d412707aaf4d81b",
+    "afterSha256": "29c64077b9ddb6e2482570f09011ba3231b6472524bdacb0105d6f32ef355fe8"
+  },
+  {
+    "path": "src/scenes/GameScene.ts",
+    "beforeSha256": "f77a42974c14e7ab67a5761e827c4e5d09757a48fd6b49dc110f44bee5b8b8f3",
+    "afterSha256": "ebe8e18cc2d940caafc73a520bb206f3761919988b9b240407dae2ffb588fd72"
+  },
+  {
+    "path": "src/systems/CombatSystem.ts",
+    "beforeSha256": "79cd9807d0f6323f5205464c7f224772fabff5f4ad8d1339809b5345aa305a7a",
+    "afterSha256": "d58ba5b8f87b245419cfaa228467efeb8c2184e69a583f7553614a0e304c534e"
+  },
+  {
+    "path": "src/systems/EnemySpawnSystem.ts",
+    "beforeSha256": "9dd1c5101f17e27ae185a160e79f22617368946b4a5143bcbf96df7c75704f7d",
+    "afterSha256": "7e13c505f2f382c58ceb01b7f156af1f05054772052eb3fad376048f802b6a89"
+  },
+  {
+    "path": "src/systems/UpgradeSystem.ts",
+    "beforeSha256": "6c9004bf688fb81b482914d1946acb814493bbdbfd331a9f6cea49ccaf92e54f",
+    "afterSha256": "36298046cce5e3ae0d6f057cc0892a9d600b9744234a0a500961fce796b25559"
+  },
+  {
+    "path": "src/talismans/TalismanSession.ts",
+    "beforeSha256": null,
+    "afterSha256": "a3f23df18eb0aa3be54964f9b5f0af4e413e63b8990682c00c578bd984999bba"
+  },
+  {
+    "path": "src/talismans/talismanConfig.ts",
+    "beforeSha256": null,
+    "afterSha256": "757fd54945ec4f76e91911f0ce24d1c452a62dcc596c3b004a685cc0517486f8"
+  },
+  {
+    "path": "src/talismans/talismanDefinitions.ts",
+    "beforeSha256": null,
+    "afterSha256": "9374e37d806067e31698165d486ba2bb742665b297f3b9b25e37c50ba53d3911"
+  },
+  {
+    "path": "src/ui/Hud.ts",
+    "beforeSha256": "ab9f0585413f00d7e2e6ceda341791b084ee8611964d386e1ad25edb3bc6dbcb",
+    "afterSha256": "064661b4bbcf6369c3f2fc9eafae11592d9b5764d1a19511e093715c0452716b"
+  },
+  {
+    "path": "src/ui/TalismanHud.ts",
+    "beforeSha256": null,
+    "afterSha256": "9792428c09ee843ce9c7f71ca770bab472a44bd2cf78de5b04fdc2e50f7fc8ac"
+  },
+  {
+    "path": "src/ui/TalismanPanel.ts",
+    "beforeSha256": null,
+    "afterSha256": "3b14edfd72726f13956bbbbbb8aec12e714fd3b35f5ffbbb93afde81606cc54e"
+  },
+  {
+    "path": "src/utils/Pool.ts",
+    "beforeSha256": "872285b0b958f13d043dca2430dddc10eb7690c194cea2b3ed0640ecad13bf2b",
+    "afterSha256": "7b86260797c0528fb0325408b000c4956b22afea8f95579567cd4b62a447aca5"
+  },
+  {
+    "path": "src/weapons/WeaponSystem.ts",
+    "beforeSha256": "50123897f42df65dd84a25a47333698d94410e73614b35c606c557df22c9cab9",
+    "afterSha256": "7c0cd4f210f0889bafb446560af6c9699200a12021466e57b9104679ea59798d"
+  },
+  {
+    "path": "tests/bosses-browser.mjs",
+    "beforeSha256": "04319740d8e9dc49844b7432b7fb275426510e49541d61f6c10ea98306cdf788",
+    "afterSha256": "6d76ef4ae77135b2bf389801ad2623f54d14974875f6880fa9425e5e5dfc74c1"
+  },
+  {
+    "path": "tests/browser-smoke.mjs",
+    "beforeSha256": "f142d17b92a917ab3faba2d7f22240f4de37339f5ca736475c51fa39162c51f4",
+    "afterSha256": "3bc390833e1b8adf302860ec977214036e491a9181002d6925a3a9195ab95ddd"
+  },
+  {
+    "path": "tests/encounters.test.ts",
+    "beforeSha256": "d4d35ff3614e6e94f55f5e263734165d49b8a0a6827814147334f86c5d5f34af",
+    "afterSha256": "9e5aa11975dca3f6a7faa4573596778751cb7ac537c63c48d8d88cbdf18b3582"
+  },
+  {
+    "path": "tests/talismans-browser.mjs",
+    "beforeSha256": null,
+    "afterSha256": "1cc153ae24ab5ce841c330a649345ef1d7ec37e65dcf93ee9cac8efe32df5d3b"
+  },
+  {
+    "path": "tests/talismans.test.ts",
+    "beforeSha256": null,
+    "afterSha256": "b3fcb81e0e3f41d32f3ad39cfcc87d524403ad6e5299db4447f5a159fb57550a"
+  }
+]

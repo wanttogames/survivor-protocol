@@ -1,0 +1,32 @@
+{
+  "name": "survivor-protocol",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "test:browser": "node tests/browser-smoke.mjs",
+    "test:audio": "node tests/audio-browser.mjs",
+    "test:weapons": "node tests/weapons-browser.mjs",
+    "test:characters": "node tests/characters-browser.mjs",
+    "test:evolution": "node tests/evolution-browser.mjs",
+    "test:bosses": "node tests/bosses-browser.mjs",
+    "test:map": "node tests/maps-browser.mjs",
+    "test:collision": "node tests/map-collision-browser.mjs",
+    "test:locale": "node tests/locale-browser.mjs",
+    "test:talismans": "node tests/talismans-browser.mjs"
+  },
+  "dependencies": {
+    "phaser": "3.90.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3",
+    "vite": "^6.4.1",
+    "tsx": "^4.20.6",
+    "@types/node": "^22.19.0",
+    "@playwright/test": "^1.56.0"
+  }
+}

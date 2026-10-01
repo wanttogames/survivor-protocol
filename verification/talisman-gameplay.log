@@ -1,0 +1,35 @@
+testing samdo
+testing gate
+testing hunger
+testing trick
+testing reaper
+testing moon
+six complete
+stacking complete
+queue complete
+pool complete
+reset complete
+{
+  "success": true,
+  "individual": [
+    "samdo",
+    "gate",
+    "hunger",
+    "trick",
+    "reaper",
+    "moon"
+  ],
+  "pause": true,
+  "stacking": true,
+  "queue": true,
+  "boss": true,
+  "retry": true,
+  "menu": true,
+  "mobile": true,
+  "spawn": {
+    "elites": 2,
+    "active": 558,
+    "capacity": 560
+  },
+  "errors": []
+}
