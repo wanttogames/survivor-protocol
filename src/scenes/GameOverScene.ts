@@ -1,3 +1,4 @@
+import { addMobileResultActions } from '../ui/MobileResultActions';
 import { TALISMANS } from '../talismans/talismanDefinitions';
 import { BOSSES, type BossId } from '../encounters/encounterConfig';
 import { WEAPONS, type WeaponId } from '../data/weaponConfig';
@@ -29,6 +30,7 @@ export class GameOverScene extends Phaser.Scene {
         super("GameOver");
     }
     create(result: RunResult) {
+        const touchControls = navigator.maxTouchPoints > 0;
         addAudioControls(this);
         nightBackdrop(this);
         this.add.rectangle(640, 390, 940, 590, 0x10151a, 0.88);
@@ -49,9 +51,15 @@ export class GameOverScene extends Phaser.Scene {
         details.forEach((text, i) => label(this, 640, 437 + i * 29, text, 12, '#c8b993').setOrigin(.5).setWordWrapWidth(850).setAlign('center'));
         label(this,640,524,()=>t('talisman.result',{names:result.talismanIds?.length?result.talismanIds.map(id=>{const d=TALISMANS.find(d=>d.id===id);return d?t(d.nameKey):id;}).join(' · '):t('result.none')}),12,'#d8b384').setOrigin(.5).setWordWrapWidth(850).setAlign('center');
         if (result.unlocked?.length)
-            label(this, 640, 723, () => t("character.select.unlocked", { names: result.unlocked!.map(id => t(characterById(id).nameKey)).join(" · ") }), 14, "#cdb574").setOrigin(.5).setWordWrapWidth(850).setAlign("center");
-        button(this, 640, 584, () => t("gameOver.retry"), () => { AudioManager.forGame(this.game).unlock(); this.scene.start("Game"); });
-        button(this, 640, 649, () => t("gameOver.mainMenu"), () => this.scene.start("Menu"));
+            label(this, 640, touchControls ? 592 : 723, () => t("character.select.unlocked", { names: result.unlocked!.map(id => t(characterById(id).nameKey)).join(" · ") }), 14, "#cdb574").setOrigin(.5).setWordWrapWidth(850).setAlign("center");
+        const retry = () => { AudioManager.forGame(this.game).unlock(); this.scene.start("Game"); };
+        const mainMenu = () => this.scene.start("Menu");
+        if (touchControls) {
+            addMobileResultActions(this, retry, mainMenu);
+        } else {
+            button(this, 640, 584, () => t("gameOver.retry"), retry);
+            button(this, 640, 649, () => t("gameOver.mainMenu"), mainMenu);
+        }
         this.input.keyboard?.once("keydown-ENTER", () => { AudioManager.forGame(this.game).unlock(); this.scene.start("Game"); });
     }
 }

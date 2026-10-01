@@ -18,6 +18,9 @@ export class VirtualJoystick {
     document.body.append(this.element);
     this.element.addEventListener('pointerdown',this.down);
     this.element.addEventListener('pointermove',this.move);
+    // Phaser also listens for legacy touch events on Window. Keep DOM touches
+    // out of its pointer pool, especially if this element is removed mid-touch.
+    for(const event of ['touchstart','touchmove','touchend','touchcancel'])this.element.addEventListener(event,this.isolateTouch,{passive:true});
     for(const event of ['pointerup','pointercancel','lostpointercapture'])this.element.addEventListener(event,this.end);
     window.addEventListener('resize',this.scheduleLayout);window.visualViewport?.addEventListener('resize',this.scheduleLayout);
     this.resizeObserver=new ResizeObserver(this.scheduleLayout);this.resizeObserver.observe(canvas);
@@ -34,9 +37,10 @@ export class VirtualJoystick {
     // Portrait letterbox: use the spare area below gameplay. Otherwise stay above its HUD footer.
     const bottom=height-rect.bottom>size+C.bottom?C.bottom:Math.max(C.bottom,height-rect.bottom+C.hudReservedHeight*rect.height/VIEW.height+C.hudGap);
     this.element.style.width=this.element.style.height=`${size}px`;
-    this.element.style.left=`${Math.max(C.edge,rect.left+C.edge)}px`;
+    this.element.style.right=`max(${Math.max(C.edge,width-rect.right+C.edge)}px, env(safe-area-inset-right, 0px))`;
     this.element.style.bottom=`${bottom}px`;
   };
+  private isolateTouch=(event:Event)=>event.stopPropagation();
   private down=(event:PointerEvent)=>{
     if(!this.enabled||this.blocked()||this.pointerId!==undefined)return;
     event.preventDefault();event.stopPropagation();this.pointerId=event.pointerId;
@@ -67,6 +71,7 @@ export class VirtualJoystick {
   destroy(){
     this.reset();this.offLocale();window.removeEventListener('resize',this.scheduleLayout);window.visualViewport?.removeEventListener('resize',this.scheduleLayout);
     this.resizeObserver.disconnect();cancelAnimationFrame(this.layoutFrame);
+    for(const event of ['touchstart','touchmove','touchend','touchcancel'])this.element.removeEventListener(event,this.isolateTouch);
     this.element.removeEventListener('pointerdown',this.down);this.element.removeEventListener('pointermove',this.move);
     for(const event of ['pointerup','pointercancel','lostpointercapture'])this.element.removeEventListener(event,this.end);
     this.element.remove();
