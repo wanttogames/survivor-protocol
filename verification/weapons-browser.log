@@ -1,0 +1,6 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> survivor-protocol@1.0.0 test:weapons
+> node tests/weapons-browser.mjs
+
+{"result":"PASS","checks":{"rosary":{"damaged":true,"cooldown":true,"follows":true},"bell":{"inside":true,"outside":true,"notEveryFrame":true},"sword":{"front":true,"back":true,"far":true},"arrow":{"duplicate":true,"threeTargets":true,"expired":true,"fourth":true,"speed":true},"hellfire":{"created":true,"tick":true,"gated":true,"second":true,"expired":true}},"enemies":356,"medianFrameMs":16.699999999999818,"p95FrameMs":50,"baselineMedianMs":16.69999999999891,"weaponUpdateP95Ms":1.5,"liveHits":{"rosary":307,"exorcism-bell":411,"lightning-sword":444,"ghost-arrow":39,"hellfire":1532,"arc-bolt":40},"notes":"6 weapons, all acquisition/level cards, KO/EN fit, level 5 exclusion, simultaneous combat, Retry reset, no 404"}

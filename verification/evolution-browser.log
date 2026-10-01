@@ -1,0 +1,6 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> survivor-protocol@1.0.0 test:evolution
+> node tests/evolution-browser.mjs
+
+{"result":"PASS","evolutions":6,"attacks":{"chain":true,"rosary":true,"echo":true,"sword":true,"arrow":true,"hellfire":true,"updateP95":1.6000000000931323,"pool":12,"allHit":true},"retry":"base Lv1","errors":[],"missing":[]}

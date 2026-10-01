@@ -34,6 +34,8 @@ const make = (id: WeaponId, key: string, values: WeaponStats[]): WeaponDefinitio
     maxLevel: 5, levels: values,
 });
 /** Seconds / world pixels. Talisman damage & cooldown are multipliers of existing player stats. */
+// Lv5 retains each weapon's signature upgrade, with smaller simultaneous
+// damage/coverage gains to soften the full-loadout crowd-clearing spike.
 export const WEAPONS: Record<WeaponId, WeaponDefinition> = {
     'thunder-talisman': { id: 'thunder-talisman', baseWeaponId: 'arc-bolt', nameKey: 'evolution.thunder-talisman.name', descriptionKey: 'evolution.thunder-talisman.description', stepKeys: [], maxLevel: 1, levels: [{ "damage": 2, "cooldown": 0.72, "projectileCount": 2, "range": 780, "duration": 1.8, "pierce": 2, "radius": 5, "speed": 1.15 }] },
     'vajra-rosary': { id: 'vajra-rosary', baseWeaponId: 'rosary', nameKey: 'evolution.vajra-rosary.name', descriptionKey: 'evolution.vajra-rosary.description', stepKeys: [], maxLevel: 1, levels: [{ "damage": 36, "cooldown": 0.38, "projectileCount": 6, "range": 112, "duration": 0, "pierce": 0, "radius": 15, "speed": 3.3 }] },
@@ -48,13 +50,13 @@ export const WEAPONS: Record<WeaponId, WeaponDefinition> = {
         { damage: 18 }, { projectileCount: 3 }, { range: 86, speed: 3 }, { projectileCount: 4, damage: 23 },
     ])),
     'exorcism-bell': make('exorcism-bell', 'bell', levels({ damage: 30, cooldown: 2.8, projectileCount: 1, range: 150, duration: .42, pierce: 0, radius: 150, speed: 0 }, [
-        { damage: 40 }, { range: 195, radius: 195 }, { cooldown: 2.2 }, { damage: 52, range: 230, radius: 230 },
+        { damage: 40 }, { range: 195, radius: 195 }, { cooldown: 2.2 }, { damage: 50, range: 215, radius: 215 },
     ])),
     'lightning-sword': make('lightning-sword', 'lightningSword', levels({ damage: 54, cooldown: 2.1, projectileCount: 1, range: 175, duration: .24, pierce: 0, radius: 0, speed: 0 }, [
-        { damage: 72 }, { range: 220 }, { cooldown: 1.65 }, { projectileCount: 2, damage: 84 },
+        { damage: 72 }, { range: 220 }, { cooldown: 1.65 }, { projectileCount: 2, damage: 78 },
     ])),
     'ghost-arrow': make('ghost-arrow', 'ghostArrow', levels({ damage: 30, cooldown: 1.25, projectileCount: 1, range: 1000, duration: 1.25, pierce: 2, radius: 3, speed: 920 }, [
-        { damage: 40 }, { pierce: 4 }, { projectileCount: 2 }, { damage: 50, pierce: 6 },
+        { damage: 40 }, { pierce: 4 }, { projectileCount: 2 }, { damage: 46, pierce: 5 },
     ])),
     hellfire: make('hellfire', 'hellfire', levels({ damage: 11, cooldown: 3.8, projectileCount: 1, range: 560, duration: 2.4, pierce: 0, radius: 72, speed: 0 }, [
         { damage: 15 }, { radius: 94 }, { duration: 3.4 }, { projectileCount: 2 },
