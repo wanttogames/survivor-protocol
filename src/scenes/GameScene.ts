@@ -1,3 +1,4 @@
+import { SoulPool } from '../utils/SoulPool';
 import { TalismanSession, applyPlayerTalismanDelta } from '../talismans/TalismanSession';
 import { talismanEnemyCapacity, TALISMAN_CONFIG } from '../talismans/talismanConfig';
 import { TalismanPanel } from '../ui/TalismanPanel';
@@ -54,7 +55,7 @@ export class GameScene extends Phaser.Scene {
     player!: Player;
     enemies!: Pool<Enemy>;
     bolts!: Pool<Projectile>;
-    orbs!: Pool<ExpOrb>;
+    orbs!: SoulPool<ExpOrb>;
     levels!: LevelSystem;
     upgrades!: UpgradeSystem;
     panel!: UpgradePanel;
@@ -118,7 +119,7 @@ export class GameScene extends Phaser.Scene {
             boltGroup.add(b);
             return b;
         }, BALANCE.limits.projectiles);
-        this.orbs = new Pool(() => new ExpOrb(this), BALANCE.limits.orbs);
+        this.orbs = new SoulPool(() => new ExpOrb(this), BALANCE.limits.orbs);
         this.levels = new LevelSystem();
         this.weapons = new WeaponSystem(this, this.player, this.enemies, this.bolts, () => this.audio.playSfx(K.TALISMAN_SHOT), (enemy, value, critical, source) => this.enemyDamaged(enemy, value, critical, source), this.player.character.startingWeaponId);
         this.progress.weaponLevel(this.player.character.startingWeaponId, 1);
@@ -317,23 +318,11 @@ export class GameScene extends Phaser.Scene {
         this.particles.emitParticleAt(x, y, 5);
         if (xp <= 0)
             return;
-        const orb = this.orbs.acquire();
-        if (orb)
-            orb.spawn(x, y, xp);
-        else {
-            let nearest: ExpOrb | undefined;
-            let dist = Infinity;
-            for (const o of this.orbs.items) {
-                const d = (o.x - x) ** 2 + (o.y - y) ** 2;
-                if (d < dist) {
-                    dist = d;
-                    nearest = o;
-                }
-            }
-            if (nearest)
-                nearest.value += xp;
-        }
+        this.orbs.deposit(x,y,xp);
     }
+    /** Development console only: scene.getSoulDebugInfo(). */
+    getSoulDebugInfo(){return import.meta.env.DEV?this.orbs.debugSnapshot():undefined;}
+
     private updateOrbs(dt: number) {
         const p = this.player;
         for (const orb of this.orbs.items) {
@@ -344,9 +333,8 @@ export class GameScene extends Phaser.Scene {
             if (dist < p.stats.pickupRadius)
                 orb.magnetized = true;
             if (dist < 20) {
-                this.grantXp(orb.value);
+                this.grantXp(orb.collect());
                 this.audio.playSfx(K.SOUL_PICKUP);
-                orb.setActive(false).setVisible(false);
             }
             else if (orb.magnetized) {
                 const step = Math.min(dist, BALANCE.orbSpeed * dt);

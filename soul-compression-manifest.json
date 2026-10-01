@@ -1,0 +1,11 @@
+{
+  "src/config/balance.ts": "c865084c23155d419ca512f68ffcfab74b07a7d399898d3f2139257f05913950",
+  "src/config/soulConfig.ts": "34f57edae842d8bff5adbf3d80d6d3b9987daaa8ee00b6bf1225af51a86da622",
+  "src/entities/ExpOrb.ts": "b9edaf38bf823f1b289606202fe47a6e4ec2f559f59a05f80cb8d4c6b178b17c",
+  "src/utils/SoulPool.ts": "08b98e01ff776ce7360fe103128a391668e42e093ebc777c0d8be7db48a8268d",
+  "src/scenes/GameScene.ts": "55f0a265a19c7a23ff95f255cf20deb9f722e399cac5344758f24a513b6fb2d6",
+  "src/theme/objectTextures.ts": "62f2745b2b84c6785630136ebe2922f57a9447778ccc19252c4bb73ebf55b7e3",
+  "tests/souls.test.ts": "6da32e9c1991af050731abc0044a26ec15657c504287ea5531370e59c4a408b7",
+  "tests/souls-browser.mjs": "84073210ec71da80ad417d907b4b9c2b09579f0e721fb54512d39c28a86e4f49",
+  "package.json": "8fc72d93b045f4177a9812f90bec9c8f97b596a93672cdb0476fd1ed5caa6607"
+}

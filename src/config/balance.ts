@@ -40,7 +40,7 @@ export const BALANCE = {
   limits: {
     enemies: 420,
     projectiles: 200,
-    orbs: 600,
+    orbs: 120,
     damageTexts: 28,
     particles: 100,
   },

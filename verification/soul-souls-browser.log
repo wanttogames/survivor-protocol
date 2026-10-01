@@ -1,0 +1,6 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> survivor-protocol@1.0.0 test:souls
+> node tests/souls-browser.mjs
+
+{"result":"PASS","conservation":{"before":{"activeSouls":120,"maxSouls":120,"storedExp":120,"mergedDrops":0,"mergedExp":0,"mergeIndex":0},"after":{"activeSouls":120,"maxSouls":120,"storedExp":1120,"mergedDrops":100,"mergedExp":1000,"mergeIndex":100},"debug":{"activeSouls":120,"maxSouls":120,"storedExp":1120,"mergedDrops":100,"mergedExp":1000,"mergeIndex":100},"clear":{"activeSouls":0,"maxSouls":120,"storedExp":0,"mergedDrops":100,"mergedExp":1000,"mergeIndex":0},"received":1120,"levels":{"level":15,"xp":92.99999999999969,"pending":14},"expected":{"level":15,"xp":93,"pending":14},"tiers":[{"value":1,"key":"orb","scale":1},{"value":10,"key":"orb-medium","scale":1.15},{"value":30,"key":"orb-large","scale":1.3},{"value":100,"key":"orb-great","scale":1.45}],"texturesStable":true,"open":true},"queue":{"selections":14,"pending":0,"open":false,"paused":false},"pause":true,"deathRetry":true,"victoryRetry":true,"errors":[]}

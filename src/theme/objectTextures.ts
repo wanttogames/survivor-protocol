@@ -118,6 +118,15 @@ export function createObjectTextures(scene: Phaser.Scene) {
     r(11, 11, 3, 5, 0xe1ede0);
     r(9, 20, 7, 1, 0x82b5b5, 0.5);
   });
+  // Baked tier art: constant-size images, no additional bodies or per-orb glow objects.
+  for(const [key,color,gold] of [
+    ['orb-medium',0x65d6c4,false],['orb-large',0xd8f7ef,false],['orb-great',0xeffff6,true],
+  ] as const)make(key,24,()=>{
+    g.fillStyle(color,.14).fillCircle(12,12,10);
+    g.lineStyle(1,gold?0xd8b45b:color,.8).strokeCircle(12,12,gold?9:7);
+    r(10,4,4,15,color);r(8,9,8,8,color);r(11,9,3,7,0xffffff);
+    if(gold){r(11,1,2,3,0xd8b45b);r(11,20,2,3,0xd8b45b);}
+  });
   make("spark", 8, () => {
     r(1, 2, 5, 3, 0xffffff);
     r(2, 1, 2, 5, 0xffffff);
