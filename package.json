@@ -19,7 +19,8 @@
     "test:locale": "node tests/locale-browser.mjs",
     "test:talismans": "node tests/talismans-browser.mjs",
     "test:cards": "node tests/card-styles-browser.mjs",
-    "test:souls": "node tests/souls-browser.mjs"
+    "test:souls": "node tests/souls-browser.mjs",
+    "test:touch": "node tests/touch-movement-browser.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0"

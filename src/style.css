@@ -15,10 +15,44 @@ body {
     sans-serif;
 }
 #game {
+  /* Keep Phaser canvas centering margins inside its parent during orientation changes. */
+  display: flow-root;
   width: 100%;
   height: 100%;
   touch-action: none;
 }
 canvas {
   display: block;
+}
+/* Only this control and the existing game surface suppress browser touch gestures. */
+.virtual-joystick {
+  position: fixed;
+  z-index: 30;
+  border: 2px solid rgba(208, 181, 117, .45);
+  border-radius: 50%;
+  background: rgba(16, 21, 26, .42);
+  box-shadow: inset 0 0 0 7px rgba(222, 211, 181, .07);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  overscroll-behavior: contain;
+}
+.virtual-joystick[hidden] { display: none; }
+.virtual-joystick-thumb {
+  position: absolute;
+  width: 34%;
+  height: 34%;
+  left: 33%;
+  top: 33%;
+  border-radius: 50%;
+  border: 2px solid rgba(217, 227, 203, .65);
+  background: rgba(126, 175, 174, .48);
+  pointer-events: none;
+}
+.virtual-joystick-thumb::after {
+  content: '';
+  position: absolute;
+  inset: 26%;
+  border: 1px solid rgba(184, 79, 61, .85);
+  transform: rotate(45deg);
 }

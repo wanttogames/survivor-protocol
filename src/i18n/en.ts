@@ -186,6 +186,7 @@ export const en = {
     retry: "Retry",
     mainMenu: "MAIN MENU",
   },
+  input: { move: "Movement joystick" },
   card: { type: { weapon: "WEAPON ART", stat: "STAT UPGRADE", evolution: "ART AWAKENING", bossReward: "BOSS TRIBUTE" } },
   rarity: { Common: "Common", Rare: "Rare", Epic: "Epic" },
   weapon: {

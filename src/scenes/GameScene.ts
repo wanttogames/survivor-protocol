@@ -1,3 +1,4 @@
+import { InputManager } from '../input/InputManager';
 import { SoulPool } from '../utils/SoulPool';
 import { TalismanSession, applyPlayerTalismanDelta } from '../talismans/TalismanSession';
 import { talismanEnemyCapacity, TALISMAN_CONFIG } from '../talismans/talismanConfig';
@@ -61,6 +62,7 @@ export class GameScene extends Phaser.Scene {
     panel!: UpgradePanel;
     elapsed = 0;
     kills = 0;
+    private movementInput!: InputManager;
     paused = false;
     ended = false;
     private spawn!: EnemySpawnSystem;
@@ -163,6 +165,8 @@ export class GameScene extends Phaser.Scene {
                 this.hurtPlayer(enemy.damage);
         });
         this.keys = this.input.keyboard!.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,ESC,ONE,TWO,THREE") as Record<string, Phaser.Input.Keyboard.Key>;
+        this.movementInput = new InputManager(this.keys,this.game.canvas,()=>this.ended||this.paused||this.panel.open||this.talismanPanel.open,()=>{if(this.player.body)this.player.setVelocity(0,0);},this.events);
+        this.events.once("shutdown",()=>this.movementInput.destroy());
         // Event-based card input survives a short keypress between slow render frames.
         ["ONE", "TWO", "THREE"].forEach((name,index)=>{
             const eventName=`keydown-${name}`;
@@ -216,6 +220,7 @@ export class GameScene extends Phaser.Scene {
         this.paused = !this.paused;
         this.pauseText.setVisible(this.paused);
         if (this.paused) {
+            this.movementInput?.suspend();
             this.physics.pause();
             this.particles.pause();
         }
@@ -225,6 +230,7 @@ export class GameScene extends Phaser.Scene {
         }
     }
     update(_time: number, delta: number) {
+        this.movementInput.sync();
         if (this.ended)
             return;
         if (this.panel.open || this.talismanPanel.open)
@@ -249,10 +255,7 @@ export class GameScene extends Phaser.Scene {
             this.progress.survival(this.elapsed);
             this.progress.flush();
         }
-        const x = Number(this.keys.D.isDown || this.keys.RIGHT.isDown) -
-            Number(this.keys.A.isDown || this.keys.LEFT.isDown);
-        const y = Number(this.keys.S.isDown || this.keys.DOWN.isDown) -
-            Number(this.keys.W.isDown || this.keys.UP.isDown);
+        const {x,y}=this.movementInput.getMovementVector();
         this.player.move(x, y, dt);
         this.spawn.update(dt, Math.min(this.elapsed, BALANCE.duration), this.player.x, this.player.y, this.bosses.active ? C.normalSpawnMultiplier : 1);
         for (const e of this.enemies.items)
@@ -374,6 +377,7 @@ export class GameScene extends Phaser.Scene {
         if (!id)
             return;
         this.audio.playSfx(K.LEVEL_UP);
+        this.movementInput?.suspend();
         this.physics.pause();
         this.particles.pause();
         this.panel.show(this.bossRewards.getBossRewardOptions(this.player.stats), choice => {
@@ -415,6 +419,7 @@ export class GameScene extends Phaser.Scene {
         if (!this.levels.consume())
             return;
         this.audio.playSfx(K.LEVEL_UP);
+        this.movementInput?.suspend();
         this.physics.pause();
         this.particles.pause();
         this.visuals.awaken(this.player.x, this.player.y);
@@ -442,6 +447,7 @@ export class GameScene extends Phaser.Scene {
     }
     private showTalisman(id?:string) {
         const d=this.talismans.offer(id);if(!d)return;
+        this.movementInput?.suspend();
         this.physics.pause();this.particles.pause();
         this.events.emit('talisman:appear',d.id); // Optional sound hook; intentionally silent.
         this.talismanPanel.show(d,accept=>{
@@ -481,6 +487,7 @@ export class GameScene extends Phaser.Scene {
         this.audio.endRun(!won);
         if (won)
             this.audio.playSfx(K.LEVEL_UP);
+        this.movementInput?.suspend();
         this.physics.pause();
         this.scene.start("GameOver", {
             time: this.elapsed,

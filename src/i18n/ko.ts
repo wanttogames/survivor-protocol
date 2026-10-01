@@ -187,6 +187,7 @@ export const ko = {
     retry: "다시 시작",
     mainMenu: "메인 화면",
   },
+  input: { move: "이동 조이스틱" },
   card: { type: { weapon: "무기 술법", stat: "능력 강화", evolution: "술식 각성", bossReward: "보스 전리품" } },
   rarity: { Common: "일반", Rare: "희귀", Epic: "영웅" },
   weapon: {

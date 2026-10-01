@@ -1,0 +1,6 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> survivor-protocol@1.0.0 test:touch
+> node tests/touch-movement-browser.mjs
+
+{"result":"PASS","keyboard":true,"cardinal":true,"diagonal":true,"deadZone":true,"outside":true,"cancel":true,"multiTouch":true,"hybrid":true,"cameraFixed":true,"cards":true,"talismans":true,"bossReward":true,"responsive":true,"retry":true,"victory":true,"menuTouch":true,"newGame":true,"errors":[]}

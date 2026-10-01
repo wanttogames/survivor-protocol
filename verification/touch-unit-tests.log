@@ -1,0 +1,63 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> survivor-protocol@1.0.0 test
+> node --import tsx --test tests/*.test.ts
+
+✔ fresh, locked selection, malformed and future saves, blocked storage (4.997348ms)
+✔ all five thresholds, no duplicate notification, persistence and selected restore (40.336231ms)
+✔ six starting loadouts, modifiers and upgrade compatibility (1.999035ms)
+✔ negative and unknown data sanitized; bounded levels (0.841674ms)
+✔ timeline thresholds, repeat/pause protection, scaled duration and new-run reset (4.093001ms)
+✔ spawn point is safely inside world, distant and outside camera at center and corners (5.708973ms)
+✔ elite variants, boss windups and bounded attacks are data-defined (0.962469ms)
+✔ boss rewards: owned weapon only, max exclusion, one-shot apply, healing/damage/XP (3.562309ms)
+✔ boss reward offers eligible evolution and preserves passive stats (1.373592ms)
+✔ boss statistics persist and malformed/older saves stay compatible (1.01498ms)
+✔ reserved boss actors cannot be acquired by normal spawn pools; boss spawn multiplier lowers frequency (19.013748ms)
+✔ evolution arc-bolt: eligibility, guaranteed card, replacement, passive retained, reset (6.071221ms)
+✔ evolution rosary: eligibility, guaranteed card, replacement, passive retained, reset (1.540145ms)
+✔ evolution exorcism-bell: eligibility, guaranteed card, replacement, passive retained, reset (0.95371ms)
+✔ evolution lightning-sword: eligibility, guaranteed card, replacement, passive retained, reset (0.595812ms)
+✔ evolution ghost-arrow: eligibility, guaranteed card, replacement, passive retained, reset (0.993887ms)
+✔ evolution hellfire: eligibility, guaranteed card, replacement, passive retained, reset (0.578327ms)
+✔ max weapon alone or character stats are insufficient; stale forged choice cannot evolve (0.950982ms)
+✔ six eligible evolutions: exactly one guaranteed, full slots replaced in place, no base reacquisition (1.138566ms)
+✔ evolution names, descriptions and conditions resolve in both languages (1.516346ms)
+✔ evolved kills credit base-family unlock statistics without saving evolution state (7.350823ms)
+✔ English fallback and dictionary/placeholder parity (35.826698ms)
+✔ locale switch, interpolation, subscriptions and cleanup (1.012357ms)
+✔ all upgrade translations use actual rarity-scaled values (2.902289ms)
+✔ saved selection wins, Korean language family detected, other languages fall back to English (4.644544ms)
+✔ automatic detection does not save; deliberate choice saves only locale and denied storage is safe (3.967621ms)
+✔ missing or malformed translation falls back to English, then key (0.41866ms)
+✔ limited anchored footprints, segmented walls and open decorative areas (43.005371ms)
+✔ moving a landmark moves its body and wall collision with the drawing (5.116743ms)
+✔ map footprints: normal, elite, boss and summon-sized positions stay in-world outside structures (22.328337ms)
+✔ map data and localized title: fixed start, six connected areas and core landmarks (1.195244ms)
+✔ keyboard and stick diagonals have the same unit speed as cardinal movement (3.122574ms)
+✔ stick dead zone stops drift, thumb clamps and outside drag keeps direction (0.692705ms)
+✔ 120 souls plus 100 overflow drops preserve every EXP; full pool never acquires (7.168867ms)
+✔ inactive slots are reused; removing a merge target does not lose subsequent drops (0.418231ms)
+✔ soul visual tiers change at exact raw EXP thresholds (0.543646ms)
+✔ large XP pickups queue all levels and retain overflow (1.684008ms)
+✔ three unique eligible choices; rarity boundaries (0.731665ms)
+✔ maxed upgrades are excluded, exhausted pool still returns three (0.565505ms)
+✔ all upgrades apply, HP and critical chance are bounded (0.769866ms)
+✔ pool reuses inactive objects and enforces cap (0.610915ms)
+✔ timeline triggers once; modal decisions exhaust candidates, including rejection (2.057131ms)
+✔ all six pacts have both penalties and rewards; multiplicative stacking and healthy HP clamp (0.684918ms)
+✔ configured safety caps stop multiplicative runaway; sub-1HP max is kept alive (0.447663ms)
+✔ red moon increases existing stat-card rarity thresholds and preserves weapon/evolution rules (1.70898ms)
+✔ pool applies live active limit even to reused objects and reserves boss identities (1.695605ms)
+✔ starting weapon, six slots, five stages and reset (2.18123ms)
+✔ mixed cards acquire and upgrade weapons, max and unavailable are excluded (5.394812ms)
+✔ weapon stages provide structural upgrades and both translations resolve (8.042086ms)
+✔ sector hits only forward close targets; circle boundary is inclusive (0.735231ms)
+ℹ tests 50
+ℹ suites 0
+ℹ pass 50
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 768.940446
