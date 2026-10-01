@@ -172,7 +172,7 @@ export const ko = {
     eyebrow: "깨달음",
     title: "술법을 깨우치세요",
     guide: "비급 하나를 골라 귀물을 물리칠 힘을 얻으세요",
-    rarity: "{rarity}   /   {number}",
+  rarity: "{rarity}   /   {number}",
     level: "단계 {current} → {next}",
     controls: "숫자 1 / 2 / 3 또는 카드 클릭    •    전투 일시정지 중",
   },
@@ -187,6 +187,7 @@ export const ko = {
     retry: "다시 시작",
     mainMenu: "메인 화면",
   },
+  card: { type: { weapon: "무기 술법", stat: "능력 강화", evolution: "술식 각성", bossReward: "보스 전리품" } },
   rarity: { Common: "일반", Rare: "희귀", Epic: "영웅" },
   weapon: {
   "pulseNeedle": {

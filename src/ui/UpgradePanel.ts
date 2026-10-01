@@ -1,9 +1,10 @@
+import { CARD_STYLES, cardKind, ensureCardTextures } from './cardStyles';
 import { WEAPON_EVOLUTIONS } from '../weapons/evolution/weaponEvolutionDefinitions';
 import { UPGRADES } from '../data/upgrades';
 import { WEAPONS, baseWeaponId, weaponDescriptionParams } from "../data/weaponConfig";
-import { frame, talisman } from "../theme/ornaments";
+import { talisman } from "../theme/ornaments";
 import { THEME as T } from "../theme/palette";
-import { t } from "../i18n";
+import { t, onLocaleChange } from "../i18n";
 import Phaser from "phaser";
 import { BALANCE } from "../config/balance";
 import { label } from "./common";
@@ -11,17 +12,20 @@ import type { UpgradeChoice, UpgradeSystem } from "../systems/UpgradeSystem";
 export class UpgradePanel {
   private objects: Phaser.GameObjects.GameObject[] = [];
   private choices: UpgradeChoice[] = [];
+  private bossContext = false;
+  private feedback?: Phaser.GameObjects.Image;
   private callback?: (c: UpgradeChoice) => void;
   constructor(
     private scene: Phaser.Scene,
     private upgrades: UpgradeSystem,
-  ) {}
+  ) { scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { this.close(); }); }
   get open() {
     return this.choices.length > 0;
   }
   show(choices: UpgradeChoice[], callback: (c: UpgradeChoice) => void, options?:{bossNameKey:import('../i18n').TranslationKey}) {
     this.close();
     this.choices = choices;
+    this.bossContext = !!options;
     this.callback = callback;
     const add = (o: Phaser.GameObjects.GameObject) => this.objects.push(o);
     add(
@@ -49,51 +53,34 @@ export class UpgradePanel {
     choices.forEach((c, i) => {
       const x = 190 + i * 330;
       const evolution=WEAPON_EVOLUTIONS.find(e=>e.id===c.definition.evolutionId);
-      const color = (evolution||options) ? 0xb18436 :
-        c.rarity === "Epic"
-          ? 0x884035
-          : c.rarity === "Rare"
-            ? 0x435f63
-            : 0x675538;
-      const hex = "#" + color.toString(16);
-      const box = this.scene.add
-        .rectangle(x + 120, 432, 300, 340, (evolution||options)?T.paperLight:T.paper)
-        .setStrokeStyle((evolution||options)?3:1, color, (evolution||options)?1:0.6)
-        .setScrollFactor(0)
-        .setDepth(201)
-        .setInteractive({ useHandCursor: true });
-      add(box);
-      const ornament = this.scene.add
-        .graphics()
-        .setScrollFactor(0)
-        .setDepth(201);
-      frame(ornament, x - 20, 272, 280, 320, T.wood);
-      // Bounded deterministic fibers; generated only when opening the cards.
-      for (let j = 0; j < 34; j++) {
-        const xx = x - 15 + ((j * 67) % 266),
-          yy = 280 + ((j * 43) % 306);
-        ornament
-          .lineStyle(1, 0x715d3e, 0.09)
-          .lineBetween(xx, yy, Math.min(x + 245, xx + 8 + (j % 17)), yy + 1);
-      }
-      ornament
-        .lineStyle(1, T.wood, 0.25)
-        .lineBetween(x, 407, x + 235, 407)
-        .lineBetween(x, 531, x + 235, 531);
+      const kind=cardKind(c,!!options), style=CARD_STYLES[kind];
+      const {key,glowKey}=ensureCardTextures(this.scene,kind);
+      const start=this.objects.length;
+      const glow=this.scene.add.image(x+120,432,glowKey).setAlpha(style.glow).setScrollFactor(0).setDepth(201);
+      add(glow);
+      add(this.scene.add.image(x+120,432,key).setScrollFactor(0).setDepth(201));
+      const box=this.scene.add.rectangle(x+120,432,300,340,style.paper,0)
+        .setStrokeStyle(style.width,style.border).setScrollFactor(0).setDepth(201)
+        .setInteractive({useHandCursor:true});
+      box.setData('cardKind',kind); box.setData('choiceIndex',i); add(box);
+      const hex='#'+style.accent.toString(16).padStart(6,'0');
+      const ornament=this.scene.add.graphics().setScrollFactor(0).setDepth(201);
       if(c.definition.weaponId||evolution){
         const textures={"arc-bolt":"bolt",rosary:"rosary-bead","exorcism-bell":"bell-wave","lightning-sword":"sword-slash","ghost-arrow":"ghost-arrow",hellfire:"hellfire-seal"};
         add(this.scene.add.image(x+30,360,textures[baseWeaponId(c.definition.weaponId??evolution!.baseWeaponId)]).setDisplaySize(52,52).setScrollFactor(0).setDepth(202));
       }else talisman(ornament, x + 5, 330, 35, 59);
-      ornament.fillStyle(T.vermilion, 0.9).fillRect(x + 202, 335, 33, 33);
-      ornament
-        .lineStyle(1, T.paper, 0.75)
-        .strokeRect(x + 207, 340, 23, 23)
-        .lineBetween(x + 212, 345, x + 225, 358)
-        .lineBetween(x + 225, 345, x + 212, 358);
       add(ornament);
-      box.on("pointerover", () => box.setFillStyle(T.paperLight));
-      box.on("pointerout", () => box.setFillStyle((evolution||options)?T.paperLight:T.paper));
-      box.on("pointerdown", () => this.select(i));
+      box.on('pointerover',()=>{
+        box.setFillStyle(style.border,.08).setStrokeStyle(style.width+1,style.border);
+        this.scene.tweens.killTweensOf(glow);
+        this.scene.tweens.add({targets:glow,alpha:style.hoverGlow,duration:110});
+      });
+      box.on('pointerout',()=>{
+        box.setFillStyle(style.paper,0).setStrokeStyle(style.width,style.border);
+        this.scene.tweens.killTweensOf(glow);
+        this.scene.tweens.add({targets:glow,alpha:style.glow,duration:100});
+      });
+      box.on('pointerdown',()=>this.select(i));
       add(
         label(
           this.scene,
@@ -101,13 +88,15 @@ export class UpgradePanel {
           288,
           () =>
             t("upgrade.rarity", {
-              rarity: evolution?t("evolution.badge"):options?t("bossReward.badge"):c.definition.weaponId ? t(this.upgrades.currentLevel(c.definition)===0?"upgrade.newWeapon":"upgrade.weaponUpgrade") : t(`rarity.${c.rarity}`),
+              rarity: kind==='evolution'?t('evolution.badge'):kind==='bossReward'?t('bossReward.badge'):t(`rarity.${c.rarity}`),
               number: `0${i + 1}`,
             }),
           12,
-          hex,
-        ).setDepth(202),
+          style.label,
+        ).setFontStyle("bold").setDepth(202),
       );
+
+      add(label(this.scene,x,308,()=>t(evolution?'card.type.evolution':kind==='bossReward'?'card.type.bossReward':c.definition.weaponId?'card.type.weapon':'card.type.stat'),11,style.label).setDepth(202));
 
       add(
         label(
@@ -115,9 +104,9 @@ export class UpgradePanel {
           x,
           418,
           () => t(c.definition.nameKey),
-          evolution?17:20,
+          evolution?18:20,
           T.text.ink,
-        ).setWordWrapWidth(250).setDepth(202),
+        ).setFontStyle("bold").setWordWrapWidth(250).setDepth(202),
       );
       add(
         label(this.scene, x, 466, () => this.description(c), 16, "#504532")
@@ -138,6 +127,25 @@ export class UpgradePanel {
           hex,
         ).setWordWrapWidth(250).setDepth(202),
       );
+      const cardObjects=this.objects.slice(start);
+      for(const o of cardObjects) if(o instanceof Phaser.GameObjects.Text){
+        const size=o.style.fontSize;
+        const max=o.y===418?38:o.y===466?65:o.y===545?42:22;
+        const fit=()=>{
+          o.setFontSize(size);
+          let font=parseInt(String(size),10);
+          while((o.height>max||o.width>250)&&font>10)o.setFontSize(--font);
+        };
+        fit();const off=onLocaleChange(fit);o.once(Phaser.GameObjects.Events.DESTROY,off);
+      }
+      // One-shot presentation tweens; combat stays paused but Scene UI is live.
+      for(const o of cardObjects){
+        const visible=o as Phaser.GameObjects.Image;
+        if(!('alpha' in visible)||!('y' in visible))continue;
+        const alpha=visible.alpha,y=visible.y;
+        visible.setAlpha(0);visible.y+=6;
+        this.scene.tweens.add({targets:visible,alpha,y,duration:style.entrance,delay:i*35,ease:'Sine.Out'});
+      }
     });
     add(
       label(this.scene, 640, 655, () => t("upgrade.controls"), 12, T.text.muted)
@@ -156,12 +164,18 @@ export class UpgradePanel {
     const c = this.choices[i];
     if (!c) return;
     const fn = this.callback;
+    const kind=cardKind(c,this.bossContext);
+    const {glowKey}=ensureCardTextures(this.scene,kind);
     this.close();
-    this.scene.cameras.main.flash(150, 184, 133, 66, false);
+    this.feedback=this.scene.add.image(310+i*330,432,glowKey).setScrollFactor(0).setDepth(203).setAlpha(.8);
+    const feedback=this.feedback;
+    this.scene.tweens.add({targets:feedback,alpha:0,scale:kind==='Common'?1.015:1.05,duration:kind==='Common'?100:160,onComplete:()=>feedback.destroy()});
+    // Apply immediately: preserve the existing boss/level-up/talisman queue semantics.
     fn?.(c);
   }
   close() {
-    for (const o of this.objects) o.destroy();
+    if(this.feedback){this.scene.tweens.killTweensOf(this.feedback);this.feedback.destroy();this.feedback=undefined;}
+    for (const o of this.objects) { this.scene.tweens.killTweensOf(o); o.destroy(); }
     this.objects = [];
     this.choices = [];
     this.callback = undefined;

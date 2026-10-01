@@ -171,7 +171,7 @@ export const en = {
     eyebrow: "ENLIGHTENMENT",
     title: "Awaken an ancient art",
     guide: "CHOOSE A SECRET ART TO CONTINUE",
-    rarity: "{rarity}   /   {number}",
+  rarity: "{rarity}   /   {number}",
     level: "STAGE {current} → {next}",
     controls: "1 / 2 / 3  OR CLICK A CARD    •    RESTING",
   },
@@ -186,6 +186,7 @@ export const en = {
     retry: "Retry",
     mainMenu: "MAIN MENU",
   },
+  card: { type: { weapon: "WEAPON ART", stat: "STAT UPGRADE", evolution: "ART AWAKENING", bossReward: "BOSS TRIBUTE" } },
   rarity: { Common: "Common", Rare: "Rare", Epic: "Epic" },
   weapon: {
   "pulseNeedle": {

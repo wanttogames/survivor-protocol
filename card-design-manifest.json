@@ -1,0 +1,8 @@
+{
+  "src/ui/cardStyles.ts": "f9e48cdce24865250464810d48363255178414855559320241afd4047bf57ef5",
+  "src/ui/UpgradePanel.ts": "a98613d53eb95ef4b466d7fbadd716eea62b95fb3b830530e0a29fd838f8cd53",
+  "src/i18n/ko.ts": "196b5d27d7c81745066a69fd22ee517f96f3fcee12819c6b5c1e8404d24ba22b",
+  "src/i18n/en.ts": "5eb2f3301004db6189d25a7ddb6ab7dfdc36c5d69ff60b2ae356de34f6d058b9",
+  "tests/card-styles-browser.mjs": "c6aa7deb3123e92b9758165f296b1d15e527d312ee0294ce674839a59e0bab33",
+  "package.json": "200e05a8a0cf2cccace8cdb666fc8fcfd97c9de23f57468957ba7b0a8b0a405e"
+}

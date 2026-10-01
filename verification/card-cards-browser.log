@@ -1,0 +1,6 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> survivor-protocol@1.0.0 test:cards
+> node tests/card-styles-browser.mjs
+
+{"result":"PASS","fiveKinds":true,"locales":true,"hover":true,"selection":true,"fit":true,"cache":true,"retry":true,"mobile":true,"errors":[]}
