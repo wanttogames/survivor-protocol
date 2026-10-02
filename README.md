@@ -530,3 +530,27 @@ npm run build          # PASS
 Chromium에서 ko/ko-KR/en-US/ja-JP/de-DE 첫 실행, 저장 locale 우선, 잘못된 저장 값, 실제 버튼 클릭/즉시 변경/재접속 유지, 설정 보존, Storage 차단을 확인했습니다. 한·영 각각 메뉴/캐릭터/해금 조건/HUD/맵/기본 무기 30단계/모든 강화 카드/진화 6종/보스/보상/승리/패배/해금 알림/음소거/Retry를 점검했습니다. 전체 진화 6개와 해금 5개를 표시해도 결과 화면이 겹치지 않습니다. 번역 누락 경고/페이지 예외가 없었습니다. 390×844 화면의 canvas bounds도 확인했습니다.
 
 실제 itch.io 업로드/사이트 iframe 및 Windows 기기 테스트는 수행하지 않았습니다. Storage 차단은 브라우저에서 SecurityError를 주입해 검증했습니다. 빌드에는 기존 Phaser 대형 청크 권고 경고만 있습니다.
+
+## Village progression
+
+Main Menu → Training & Talismans opens permanent preparations. Each finished run
+awards 12 coins per full minute survived, 8 per elite, 35 per boss and 100 extra for
+victory. A death before one minute without encounter kills grants no coins. Settlement
+occurs once in gameplay termination, never when re-entering the result screen.
+
+Three trainings have three ranks: max HP +3%, pickup radius +5%, movement speed +2%
+per rank. Five permanently unlocked departure talismans share one equipped slot:
+Guardian (+10% HP and one blocked hit), Soul Summoning (+20% pickup radius), Swift
+Stride (+5% movement), Scholar (+10% XP for the first 120 gameplay seconds), Spirit
+Breaker (+5% boss damage). They are not consumed. Buying an unlock and equipping it
+are separate actions. Preparations are copied once at run creation, after character
+passives; cursed talismans continue to stack normally. Retry restores the loadout,
+not temporary run buffs.
+
+Balance and save validation live in `src/progression/MetaProgression.ts`. Progress is
+saved under `survivor-protocol.village.v1` in this browser's localStorage, independently
+of character unlocks. Clearing browser data clears this progress. If storage is
+blocked, the current page session still works but cannot persist across reloads.
+
+`npm run test:progression` runs browser integration tests for shopping, five charms,
+settlement, storage reload, retry, cursed stacking and mobile Korean/English UI.

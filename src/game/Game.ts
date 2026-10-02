@@ -1,3 +1,4 @@
+import { VillageScene } from '../scenes/VillageScene';
 import {CharacterSelectScene} from "../scenes/CharacterSelectScene";
 import Phaser from "phaser";
 import { VIEW } from "../config/gameConfig";
@@ -15,7 +16,7 @@ export function createGame() {
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     physics: { default: "arcade", arcade: { debug: false } },
     render: { antialias: true, powerPreference: "high-performance" },
-    scene: [BootScene, MenuScene, CharacterSelectScene, GameScene, GameOverScene],
+    scene: [BootScene, MenuScene, VillageScene, CharacterSelectScene, GameScene, GameOverScene],
   });
   // Mobile orientation can refresh FIT using the previous parent size. Re-read the
   // actual container after layout, including while gameplay is paused.

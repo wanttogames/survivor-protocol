@@ -1,3 +1,4 @@
+import { getMetaProgression, type StartingBenefits } from '../progression/MetaProgression';
 import { InputManager } from '../input/InputManager';
 import { SoulPool } from '../utils/SoulPool';
 import { TalismanSession, applyPlayerTalismanDelta } from '../talismans/TalismanSession';
@@ -37,6 +38,8 @@ import { Hud } from "../ui/Hud";
 import { UpgradePanel } from "../ui/UpgradePanel";
 import { label } from "../ui/common";
 export class GameScene extends Phaser.Scene {
+    startingBenefits!: StartingBenefits;
+    private runId = "";
     talismans!: TalismanSession;
     talismanPanel!: TalismanPanel;
     private talismanHud!: TalismanHud;
@@ -85,6 +88,8 @@ export class GameScene extends Phaser.Scene {
         this.audio = AudioManager.forGame(this.game);
         this.audio.stopSfx();
         this.audio.playBgm(K.NIGHT_STAGE);
+        this.runId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        this.startingBenefits = getMetaProgression().snapshot();
         this.pendingRewards = [];
         this.extraElites=[];
         this.talismans=new TalismanSession();
@@ -103,6 +108,8 @@ export class GameScene extends Phaser.Scene {
         this.mapManager.create();
         this.visuals = new CombatVisuals(this);
         this.player = new Player(this, getCharacterManager().character);
+        this.startingBenefits.apply(this.player.stats);
+        this.player.bossDamageMultiplier = this.startingBenefits.bossDamage;
         this.player.setPosition(this.mapManager.definition.start.x, this.mapManager.definition.start.y);
         this.mapManager.attachPlayer(this.player);
         this.cameras.main
@@ -208,6 +215,11 @@ export class GameScene extends Phaser.Scene {
     private hurtPlayer(damage: number) {
         if (this.ended || this.paused || this.panel.open || this.talismanPanel.open || this.player.invulnerable > 0)
             return;
+        if (this.startingBenefits.absorbHit()) {
+            this.player.invulnerable = BALANCE.contactInvulnerability;
+            this.cameras.main.flash(140, 180, 165, 100, false);
+            return;
+        }
         this.player.stats.hp = Math.max(0, this.player.stats.hp - damage * this.player.stats.damageTakenMultiplier);
         this.player.invulnerable = BALANCE.contactInvulnerability;
         this.cameras.main.shake(90, .003);
@@ -436,7 +448,7 @@ export class GameScene extends Phaser.Scene {
         });
     }
     private grantXp(amount:number) {
-        const xp=amount*this.talismans.modifiers.xpMultiplier;
+        const xp=amount*this.talismans.modifiers.xpMultiplier*this.startingBenefits.xpMultiplier(this.elapsed);
         this.levels.add(xp);this.progress.collectSouls(xp);
     }
     /** Dev-only invocation; no production UI or debug controls. */
@@ -456,7 +468,7 @@ export class GameScene extends Phaser.Scene {
             const after=this.talismans.modifiers;
             if(accept){
                 applyPlayerTalismanDelta(this.player.stats,before,after);
-                this.player.bossDamageMultiplier=after.bossDamageMultiplier;
+                this.player.bossDamageMultiplier=after.bossDamageMultiplier*this.startingBenefits.bossDamage;
                 this.upgrades.rarityBonus=after.upgradeRarityBonus;
                 // One pass on acceptance, never a per-frame effect scan. Preserve HP fraction.
                 for(const e of this.enemies.items)if(e.active){
@@ -489,7 +501,10 @@ export class GameScene extends Phaser.Scene {
             this.audio.playSfx(K.LEVEL_UP);
         this.movementInput?.suspend();
         this.physics.pause();
+        const earnedCoins = getMetaProgression().settle(this.runId, { time: this.elapsed, eliteKills: this.runStats.eliteKills, bossKills: this.runStats.bossKills, won });
         this.scene.start("GameOver", {
+            earnedCoins,
+            coinBalance: getMetaProgression().state.coins,
             time: this.elapsed,
             level: this.levels.level,
             kills: this.kills,

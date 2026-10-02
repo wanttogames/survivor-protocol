@@ -1,10 +1,11 @@
+import { getMetaProgression } from '../progression/MetaProgression';
 import { getCharacterManager } from "../characters/CharacterManager";
 import { WEAPONS } from "../data/weaponConfig";
 import { AudioManager } from "../audio/AudioManager";
 import { addAudioControls } from "../audio/audioControls";
 import Phaser from "phaser";
 import { addLanguageSelector } from "../ui/LanguageSelector";
-import { t } from "../i18n";
+import { t, onLocaleChange } from "../i18n";
 import { label, button } from "../ui/common";
 import { nightBackdrop } from "../theme/ornaments";
 import { THEME as T } from "../theme/palette";
@@ -28,6 +29,18 @@ export class MenuScene extends Phaser.Scene {
         label(this, 112, 394, () => t("menu.tagline"), 22, T.text.pale);
         label(this, 112, 441, () => t("menu.description"), 17, T.text.muted).setLineSpacing(8);
         button(this, 242, 560, () => t("menu.play"), () => { AudioManager.forGame(this.game).unlock(); this.scene.start("CharacterSelect"); });
+        button(this, 560, 560, () => t("village.open"), () => this.scene.start("Village"));
+        if (navigator.maxTouchPoints > 0) {
+            const shop = document.createElement('button');
+            shop.className = 'mobile-village-entry'; shop.type = 'button';
+            const update = () => { shop.textContent = t('village.open'); };
+            update(); document.body.append(shop);
+            for (const event of ['touchstart', 'touchmove', 'touchend', 'touchcancel']) shop.addEventListener(event, e => e.stopPropagation(), { passive: true });
+            shop.addEventListener('click', () => this.scene.start('Village'));
+            const off = onLocaleChange(update);
+            this.events.once('shutdown', () => { off(); shop.remove(); });
+        }
+        label(this, 112, 607, () => t("village.coins", { value: getMetaProgression().state.coins }), 16, T.text.gold);
         label(this, 112, 643, () => t("menu.moveGuide"), 13, T.text.muted);
         label(this, 112, 673, () => t("menu.autoAttack"), 12, T.text.muted);
         label(this, 1190, 637, () => t("menu.sector", { character: t(getCharacterManager().character.nameKey), weapon: t(WEAPONS[getCharacterManager().character.startingWeaponId].nameKey) }), 13, T.text.gold)

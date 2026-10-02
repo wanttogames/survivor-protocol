@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { onLocaleChange, t } from '../i18n';
 
 /** Screen-space buttons: canvas FIT must not shrink mobile hit targets. */
-export function addMobileResultActions(scene: Phaser.Scene, retry: () => void, mainMenu: () => void) {
+export function addMobileResultActions(scene: Phaser.Scene, retry: () => void, mainMenu: () => void, summary?: () => string) {
   const root = document.createElement('div');
   root.className = 'mobile-result-actions';
   // Native buttons handle their own gestures; Phaser's Window touch listener
@@ -10,6 +10,8 @@ export function addMobileResultActions(scene: Phaser.Scene, retry: () => void, m
   for (const event of ['touchstart', 'touchmove', 'touchend', 'touchcancel']) {
     root.addEventListener(event, event => event.stopPropagation(), { passive: true });
   }
+  const caption = document.createElement("p");
+  if (summary) { caption.className = "mobile-result-summary"; root.append(caption); }
   let chosen = false;
   const actions = [
     { id: 'retry', key: 'gameOver.retry', run: retry },
@@ -55,7 +57,10 @@ export function addMobileResultActions(scene: Phaser.Scene, retry: () => void, m
     root.append(button);
     return button;
   });
-  const refresh = () => actions.forEach((action, i) => { buttons[i].textContent = t(action.key); });
+  const refresh = () => {
+    if (summary) caption.textContent = summary();
+    actions.forEach((action, i) => { buttons[i].textContent = t(action.key); });
+  };
   refresh();
   const offLocale = onLocaleChange(refresh);
   document.body.append(root);
